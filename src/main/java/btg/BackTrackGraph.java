@@ -89,7 +89,7 @@ public class BackTrackGraph {
 
         //amIcrazy();
         createRequiresConnections();
-        //inferLinks();
+        inferLinks_v2();
 
     }
 
@@ -176,6 +176,7 @@ public class BackTrackGraph {
      * will have a link with the postTournament/postPlay (including getTournamet)
      */
     private void inferLinks() {
+
         // Teve ficar desta forma por causa do erro : ConcurrentModificationException
         // Now that we have the requires edges let's infer the links
         // The links should be a different type of edge
@@ -227,20 +228,95 @@ public class BackTrackGraph {
 
     }
 
+    private void inferLinks_v2() {
+
+        // Teve ficar desta forma por causa do erro : ConcurrentModificationException
+        // Now that we have the requires edges let's infer the links
+        // The links should be a different type of edge
+        // For that I created two label classes
+        // And we can use the instance of to differenciate them
+        
+        Set<Operation> set = new HashSet<>(btg.vertexSet());
+        Set<Operation> operationsToAdd = new HashSet<>();
+
+        for(Operation o : set) {
+            //System.out.println("This is the operation in question " + o.getOperationID());
+            Set<DefaultEdge> edge_set = btg.incomingEdgesOf(o);
+            for(DefaultEdge e : edge_set) {
+                // getPlayer : o
+                // a -> getPlayer
+                // b -> getPlayer
+                // c -> getPlayer
+
+                Operation o_source = btg.getEdgeSource(e);
+                
+                
+                //System.out.println("This is the source: " + btg.getEdgeSource(e).getOperationID() + " and this is the target: " + btg.getEdgeTarget(e).getOperationID());
+                String operation_url_changed = "(" + btg.getEdgeTarget(e).getVerb() + " " + btg.getEdgeTarget(e).getUrl() + ")";
+                String operation_id = operationsURLs.get(operation_url_changed).getOperationID();
+                //System.out.println("I am the operation: " + operation_id); // should print getTournament for example
+                
+
+                // No de incidencia e o que incide dele não é apenas self getter edges
+                // tambem temos requires edges nele entao entramos aqui. Porque repara
+                // No checkEnrollment ha incidentes mas sao todos de self getters.
+
+                if(operation_id.equals("getTournament")) {
+                    String[] to_link_url = operation_url_changed.split("\\/\\{");
+                    String create_connection = to_link_url[0].replaceAll("GET", "POST") + ")";
+                    // So now we should have : POST /tournaments
+                   
+                    Operation o_to_link = operationsURLs.get(create_connection);
+                 
+                    btg.addEdge(o, o_to_link, new LinkEdge());
+                    //System.out.println("I am adding the edge from: " + o.getOperationID() + " -----> " + o_to_link.getOperationID());
+                    break;
+                    //operationsToAdd.add(o_to_link);
+                   
+                }
+                
+               
+                
+                if(operation_id.equals("getPlayer")) {
+                   
+                    String[] to_link_url = operation_url_changed.split("\\/\\{");
+                    String create_connection = to_link_url[0].replaceAll("GET", "POST") + ")";
+                    Operation o_to_link = operationsURLs.get(create_connection);
+                    btg.addEdge(o, o_to_link, new LinkEdge());
+                    //System.out.println("I am adding the edge from: " + o.getOperationID() + " -----> " + o_to_link.getOperationID());
+                    break;
+                    //operationsToAdd.add(o_to_link);
+ 
+                }
+                
+
+            }
+
+
+            /** 
+            for(Operation o_add : operationsToAdd) {
+                System.out.println("I will add the followind edge: " + o.getOperationID() + "-->" + o_add.getOperationID());
+                btg.addEdge(o_add, o, new LinkEdge());
+            }
+            */
+            
+           
+        }
+    }
     public void iterateAllEdges() {
         Set<DefaultEdge> set = btg.edgeSet();
         for(DefaultEdge e : set) {
             Operation o_source = btg.getEdgeSource(e);
             Operation o_target = btg.getEdgeTarget(e);
-            System.out.println(btg.getEdge(o_source, o_target)); // esta existe 
-            System.out.println(btg.getEdge(o_target, o_source)); // esta nao existe e ele devolve null
+            //System.out.println(btg.getEdge(o_source, o_target)); // esta existe 
+            //System.out.println(btg.getEdge(o_target, o_source)); // esta nao existe e ele devolve null
             
             if(e instanceof SelfEdge)  {
-                System.out.println("This is the edge from: " + o_source.getOperationID() + " to " + o_target.getOperationID() + " and I am self edged");
+                System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am self edged");
 
             }
             else {
-                System.out.println("This is the edge from: " + o_source.getOperationID() + " to " + o_target.getOperationID());
+                System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID());
 
             }
         }
