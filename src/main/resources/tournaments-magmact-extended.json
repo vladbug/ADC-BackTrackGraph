@@ -672,10 +672,10 @@
       "POST": {
         "operationID": "postPlayer",
         "requires": [
-          "response_code(GET /players/{playerNIF}) == 404"
+          "response_code(GET /players/request_body(this){playerNIF}) == 404"
         ],
         "ensures": [
-          "response_code(GET /players/{playerNIF}) == 200",
+          "response_code(GET /players/request_body(this){playerNIF}) == 200",
           "response_body(this) == request_body(this)"
         ],
         "pathParams": [],
@@ -826,10 +826,10 @@
       "POST": {
         "operationID": "postTournament",
         "requires": [
-          "response_code(GET /tournaments/{tournamentId}) == 404"
+          "response_code(GET /tournaments/request_body(this){tournamentId}) == 404"
         ],
         "ensures": [
-          "response_code(GET /tournaments/{tournamentId}) == 200",
+          "response_code(GET /tournaments/request_body(this){tournamentId}) == 200",
           "response_body(this) == request_body(this)"
         ],
         "pathParams": [],

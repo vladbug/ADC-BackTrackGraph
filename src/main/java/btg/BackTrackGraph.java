@@ -1,19 +1,20 @@
 package btg;
 
-import odg.exceptions.VertexDoesNotExistException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
 import org.jgrapht.Graph;
-import org.jgrapht.*;
-import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultUndirectedGraph;
-import org.jgrapht.traverse.TopologicalOrderIterator;
-import parser_domain.Link;
-import parser_domain.Operation;
-import parser_domain.RequestBodySchema;
-import parser_domain.Response;
+import org.jgrapht.graph.SimpleDirectedGraph;
 
-import java.util.*;
+import parser_domain.Operation;
 
 public class BackTrackGraph {
 
@@ -42,7 +43,7 @@ public class BackTrackGraph {
     
     public BackTrackGraph(Map<String, Operation> operations) {
 
-        btg = new DefaultUndirectedGraph<>(null, null, false);
+        btg = new DefaultDirectedGraph<>(null, null, false);
         operationsURLs = new HashMap<>(100);
         int number_of_operations = 0;
 
@@ -64,9 +65,6 @@ public class BackTrackGraph {
 
         for(int j = 0; j < bag.length; j++) {
 
-            
-            
-            
             // System.out.println(bag[j].getOperationID() + " " + bag[j].getVerb());
             // System.out.println("----");
             // System.out.println(bag[j].getUrl());
@@ -83,20 +81,48 @@ public class BackTrackGraph {
 
         }
 
+        operationsURLs.forEach((k,v) -> {
+            //System.out.println("Key" + k);
+            //System.out.println("Value" + v.getUrl()); 
+        }
+        );
+
+        //amIcrazy();
         createRequiresConnections();
-        inferLinks();
+        //inferLinks();
+
+    }
+
+    public void inferAllLinks() {
+        this.inferLinks();
+    }
+
+    public void amIcrazy() { // i am not
+        Set<Operation> s = btg.vertexSet();
+
+        for(Operation o : s) {
+            System.out.println(o.getOperationID());
+            List<String> req = o.getRequires();
+            for(String r : req) {
+                System.out.println(r);
+            }
+        }
+
 
     }
 
     // This method will create the edges of the requires operation for our graph
     private void createRequiresConnections() { // esta a dar merda aqui e nao sei porque
         Set<Operation> s = btg.vertexSet();
+       
 
         for(Operation o : s) {
             List<String> requires_list = o.getRequires();
+
             List<String> parsed_list = parseRequires(requires_list);
             for(String pre : parsed_list) {
-                
+                //System.out.println(o.getOperationID());
+                //System.out.println("In our list" + pre);
                 if(pre.equals("T")) {
                     //System.out.println("T!"); // orange nodes
                 }
@@ -110,7 +136,19 @@ public class BackTrackGraph {
                      String new_pre = remove_request_body[0] + remove_request_body[1];
                     // System.out.println("This is the new operation without the request body : " + new_pre);
                     // System.out.println(operationsURLs.get(new_pre).getOperationID());
-                    btg.addEdge(o,operationsURLs.get(new_pre) , new DefaultEdge());
+                    //System.out.println(o.getOperationID());
+                    //System.out.println(remove_request_body[0]);
+                    //Check if it is a self-getter or no! In this scenario it is always the
+                    // post of something so we want to know if there is already a post of that
+                    if(o.getVerb().equals("POST") && new_pre.contains(o.getUrl())) {
+                        //System.out.println(o.getUrl());
+                        //System.out.println(new_pre);
+
+                        btg.addEdge(o,operationsURLs.get(new_pre) , new SelfEdge());
+                    }
+
+                    btg.addEdge(o,operationsURLs.get(new_pre) , new RequiresEdge());
+
                 }
                 else {
                     // DAR FIX NAQUELES QUE TÊM UM REQUEST_BODY, POIS ELE NAO ESTA NO MAPA
@@ -120,7 +158,10 @@ public class BackTrackGraph {
                     // System.out.println(pre);
                     // System.out.println(operationsURLs.get(pre).getOperationID());
                     //btg.addEdge(o, operationsURLs.get(pre),null);
-                    btg.addEdge(o,operationsURLs.get(pre) ,new DefaultEdge());
+                    // Check if it is a self_getter or no! In this scenario it is always
+                    // a delete of something so it check if it exists. So maybe it is
+                    // not a "self getter node"
+                    btg.addEdge(o,operationsURLs.get(pre) ,new RequiresEdge());
 
                 }
              
@@ -130,7 +171,59 @@ public class BackTrackGraph {
     }
 
     // This method will infer the links in our graph
+    /**
+     * The rule here will be : everyone with a requires over getTournament/getPlayer
+     * will have a link with the postTournament/postPlay (including getTournamet)
+     */
     private void inferLinks() {
+        // Teve ficar desta forma por causa do erro : ConcurrentModificationException
+        // Now that we have the requires edges let's infer the links
+        // The links should be a different type of edge
+        // For that I created two label classes
+        // And we can use the instance of to differenciate them
+        
+        Set<Operation> set = new HashSet<>(btg.vertexSet());
+        Set<Operation> operationsToAdd = new HashSet<>();
+
+        for(Operation o : set) {
+            System.out.println("This is the operation in question " + o.getOperationID());
+            Set<DefaultEdge> edge_set = btg.incomingEdgesOf(o);
+            for(DefaultEdge e : edge_set) {
+                Operation o_target = btg.getEdgeTarget(e);
+                System.out.println("This is the source: " + btg.getEdgeSource(e).getOperationID() + " and this is the target: " + o_target.getOperationID());
+                String operation_url_changed = "(" + o_target.getVerb() + " " + o_target.getUrl() + ")";
+                String operation_id = operationsURLs.get(operation_url_changed).getOperationID();
+
+                if(operation_id.equals("getTournament")) {
+                    String[] to_link_url = operation_url_changed.split("\\/\\{");
+                    String create_connection = to_link_url[0].replaceAll("GET", "POST") + ")";
+                    // So now we should have : POST /tournaments
+                   
+                    Operation o_to_link = operationsURLs.get(create_connection);
+                 
+                    //btg.addEdge(o, o_to_link, new LinkEdge());
+                    operationsToAdd.add(o_to_link);
+                   
+                }
+               
+                if(operation_id.equals("getPlayer")) {
+                   
+                    String[] to_link_url = operation_url_changed.split("\\/\\{");
+                    String create_connection = to_link_url[0].replaceAll("GET", "POST") + ")";
+                    Operation o_to_link = operationsURLs.get(create_connection);
+                    //btg.addEdge(o, o_to_link, new LinkEdge());
+                    operationsToAdd.add(o_to_link);
+ 
+                }
+
+            }
+
+            for(Operation o_add : operationsToAdd) {
+                System.out.println("I will add the followind edge: " + o.getOperationID() + "-->" + o_add.getOperationID());
+                btg.addEdge(o, o_add, new LinkEdge());
+            }
+           
+        }
 
     }
 
@@ -139,7 +232,17 @@ public class BackTrackGraph {
         for(DefaultEdge e : set) {
             Operation o_source = btg.getEdgeSource(e);
             Operation o_target = btg.getEdgeTarget(e);
-            System.out.println("This is the edge from: " + o_source.getOperationID() + " to " + o_target.getOperationID());
+            System.out.println(btg.getEdge(o_source, o_target)); // esta existe 
+            System.out.println(btg.getEdge(o_target, o_source)); // esta nao existe e ele devolve null
+            
+            if(e instanceof SelfEdge)  {
+                System.out.println("This is the edge from: " + o_source.getOperationID() + " to " + o_target.getOperationID() + " and I am self edged");
+
+            }
+            else {
+                System.out.println("This is the edge from: " + o_source.getOperationID() + " to " + o_target.getOperationID());
+
+            }
         }
     }
 
@@ -174,14 +277,6 @@ public class BackTrackGraph {
             }
         }
        return parsed_requires;
-    }
-
-    private boolean equals(String one, String two) {
-        // (GET /tournaments/{tournamentId})
-        // (GET /tournaments/{tournamentId}) == 200
-
-
-        return false;
     }
 
 

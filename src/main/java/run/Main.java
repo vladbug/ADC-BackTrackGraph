@@ -22,6 +22,7 @@ public class Main {
         OperationDependencyGraph odg = new OperationDependencyGraph(spec.getOperations());
         BackTrackGraph btg = new BackTrackGraph(spec.getOperations());
         btg.iterateAllEdges();
+        //btg.inferAllLinks();
         
         // // Generating all topological sorts used for nominal test cases
         // System.out.println("\n********* SORTS FOR NOMINAL TESTS *********\n");
