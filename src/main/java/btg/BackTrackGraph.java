@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.Stack;
 
 import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultUndirectedGraph;
@@ -38,6 +40,8 @@ public class BackTrackGraph {
     // This map will map the operations URL to the corresponding IDs
     // This will be usefull to help to generate the requires connections
     private Map<String,Operation> operationsURLs; 
+
+    // This map will map a number to the operation, this will be used 
 
 
     
@@ -93,9 +97,6 @@ public class BackTrackGraph {
 
     }
 
-    public void inferAllLinks() {
-        this.inferLinks();
-    }
 
     public void amIcrazy() { // i am not
         Set<Operation> s = btg.vertexSet();
@@ -346,8 +347,8 @@ public class BackTrackGraph {
             
             }
 
-            for(Operation wtf : operationsToAdd) {
-                btg.addEdge(o,wtf, new LinkEdge());
+            for(Operation o_add : operationsToAdd) {
+                btg.addEdge(o,o_add, new LinkEdge());
             }
 
             operationsToAdd = new HashSet<>();
@@ -360,7 +361,7 @@ public class BackTrackGraph {
             Operation o_source = btg.getEdgeSource(e);
             Operation o_target = btg.getEdgeTarget(e);
             //System.out.println(btg.getEdge(o_source, o_target)); // esta existe 
-            //System.out.println(btg.getEdge(o_target, o_source)); // esta nao existe e ele devolve null
+            //System.out.println(btg.getEdge(o_target, o_source)); // esta nao existe e ele devolve null, é o correto
             
             if(e instanceof SelfEdge)  {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am self edged");
@@ -379,8 +380,35 @@ public class BackTrackGraph {
         // between 0 and the bag.lenght - 1
         // With this we will be able to get
         // a random element from the array
-        Random rnd = new Random();
-        int rndNumber = rnd.nextInt(bag.length);
+        // Random rnd = new Random();
+        Stack<Operation> stack = new Stack<>();
+        // int rndNumber = rnd.nextInt(bag.length);
+        Operation o = getRandomOperation();
+
+        // Now given that operation we will backtrack
+        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+
+        // Having the bag $ and the sequence $ , two different things
+        // In the sequence it is to differentiante resources
+
+        
+
+        return null;
+
+
+    }
+
+    private Operation getRandomOperation() {
+        Set<Operation> operations = btg.vertexSet();
+        int size = operations.size();
+        int rnd = new Random().nextInt(size);
+        int i = 0;
+        for(Operation o : operations) {
+            if(i == rnd)
+                return o;
+            i++;
+        }
+
         return null;
     }
 
