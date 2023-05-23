@@ -94,6 +94,12 @@ public class BackTrackGraph {
         //amIcrazy();
         createRequiresConnections();
         inferLinks_v3();
+        List<String> response = generateSequence();
+        for(String s : response) {
+            System.out.println(s);
+        }
+
+        System.out.println("didn't print shit");
 
     }
 
@@ -381,24 +387,53 @@ public class BackTrackGraph {
         // With this we will be able to get
         // a random element from the array
         // Random rnd = new Random();
-        Stack<Operation> stack = new Stack<>();
+        Stack<Operation> stack_return = new Stack<>();
+        Stack<Operation> stack_control = new Stack<>();
         // int rndNumber = rnd.nextInt(bag.length);
         Operation o = getRandomOperation();
+        stack_return.add(o);
+        stack_control.add(o);
 
-        // Now given that operation we will backtrack
-        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+        System.out.println("I am entering the first while");
 
-        // Having the bag $ and the sequence $ , two different things
-        // In the sequence it is to differentiante resources
+        while(!stack_control.isEmpty()) {
+            Operation to_process = stack_control.pop();
+            System.out.println(to_process.getOperationID());
+            // Now given that operation we will backtrack
+            Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(to_process);
 
+            // Having the bag $ and the sequence $ , two different things
+            // In the sequence it is to differentiante resources
+            for(DefaultEdge e : edge_set) {
+                Operation op = btg.getEdgeTarget(e);
+                System.out.println("This is my target: " + op.getOperationID());
+                if(!(e instanceof SelfEdge)) {
+                    stack_return.add(op);
+                    stack_control.add(op);
+                }
+               
+            
+            }
+
+        }
+
+        List<String> sequence = new LinkedList<>();
+        System.out.println("I will be stuck here");
+        while(!stack_return.isEmpty()) {
+            sequence.add(stack_return.pop().getOperationID());
+        }
         
 
-        return null;
+        return sequence;
 
 
     }
 
+    // It is better to have an array, the time complexity will be better
+    // we won't need to iterate every single vertex in the graph
+    // We just do a contasnt access to the array
     private Operation getRandomOperation() {
+
         Set<Operation> operations = btg.vertexSet();
         int size = operations.size();
         int rnd = new Random().nextInt(size);
