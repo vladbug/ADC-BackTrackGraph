@@ -60,31 +60,6 @@ public class BackTrackGraph {
             number_of_operations++;
         }
         
-        bag = new Operation[number_of_operations];
-        int i = 0;
-        for (Map.Entry<String, Operation> entry: operations.entrySet()) {
-            bag[i] = entry.getValue();
-            i++;
-        }
-
-        for(int j = 0; j < bag.length; j++) {
-
-            // System.out.println(bag[j].getOperationID() + " " + bag[j].getVerb());
-            // System.out.println("----");
-            // System.out.println(bag[j].getUrl());
-            // System.out.println("----");
-            List<String> parsed = parseRequires(bag[j].getRequires());
-            for(String s : parsed) {
-                //System.out.println(s);
-            }
-            //System.out.println(bag[j].getRequires());
-            // System.out.println("----");
-            // System.out.println(bag[j].getRequestBody()); // how do I extract info from this?
-            // System.out.println("----");
-            bag[j].getVerb();
-
-        }
-
         operationsURLs.forEach((k,v) -> {
             //System.out.println("Key" + k);
             //System.out.println("Value" + v.getUrl()); 
@@ -94,13 +69,18 @@ public class BackTrackGraph {
         //amIcrazy();
         createRequiresConnections();
         inferLinks_v3();
-        List<String> response = generateSequence();
-        for(String s : response) {
-            System.out.println(s);
+
+        for(int j = 0; j < 50; j++) {
+
+            System.out.println("This is a new test sequence!");
+            List<String> response = generateSequence();
+            for(String s : response) {
+                System.out.println(s);
+            }
+            System.out.println("------------------------------");
+
         }
-
-        System.out.println("didn't print shit");
-
+    
     }
 
 
@@ -389,10 +369,64 @@ public class BackTrackGraph {
         // Random rnd = new Random();
         Stack<Operation> stack_return = new Stack<>();
         Stack<Operation> stack_control = new Stack<>();
+        Set<Operation> set_control = new HashSet<>();
         // int rndNumber = rnd.nextInt(bag.length);
         Operation o = getRandomOperation();
         stack_return.add(o);
         stack_control.add(o);
+        set_control.add(o);
+
+        //sSystem.out.println("I am entering the first while");
+
+        while(!stack_control.isEmpty()) {
+            Operation to_process = stack_control.pop();
+            //System.out.println(to_process.getOperationID());
+            // Now given that operation we will backtrack
+            Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(to_process);
+
+            // Having the bag $ and the sequence $ , two different things
+            // In the sequence it is to differentiante resources
+            for(DefaultEdge e : edge_set) {
+                Operation op = btg.getEdgeTarget(e);
+                //System.out.println("This is my target: " + op.getOperationID());
+                if(!(e instanceof SelfEdge) && !set_control.contains(op)) {
+                    stack_return.add(op);
+                    stack_control.add(op);
+                    set_control.add(op);
+                }
+               
+            
+            }
+
+        }
+
+
+        List<String> sequence = new LinkedList<>();
+        //System.out.println("I will be stuck here");
+        while(!stack_return.isEmpty()) {
+            sequence.add(stack_return.pop().getOperationID());
+        }
+        
+
+        return sequence;
+
+
+    }
+
+    private List<String> generateSequence(Operation o) {
+         // This will generate a random number
+        // between 0 and the bag.lenght - 1
+        // With this we will be able to get
+        // a random element from the array
+        // Random rnd = new Random();
+        Stack<Operation> stack_return = new Stack<>();
+        Stack<Operation> stack_control = new Stack<>();
+        Set<Operation> set_control = new HashSet<>();
+        // int rndNumber = rnd.nextInt(bag.length);
+        stack_return.add(o);
+        stack_control.add(o);
+        set_control.add(o);
+        System.out.println(set_control.contains(o));
 
         System.out.println("I am entering the first while");
 
@@ -401,21 +435,41 @@ public class BackTrackGraph {
             System.out.println(to_process.getOperationID());
             // Now given that operation we will backtrack
             Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(to_process);
+          
 
             // Having the bag $ and the sequence $ , two different things
             // In the sequence it is to differentiante resources
             for(DefaultEdge e : edge_set) {
                 Operation op = btg.getEdgeTarget(e);
                 System.out.println("This is my target: " + op.getOperationID());
-                if(!(e instanceof SelfEdge)) {
+                System.out.println(set_control.contains(op));
+                if(!(e instanceof SelfEdge) && !set_control.contains(op)) {
                     stack_return.add(op);
                     stack_control.add(op);
+                    set_control.add(op);
+                    System.out.println("I contatin now this operation: " + op.getOperationID() + " " + set_control.contains(o));
+
                 }
                
             
             }
 
+            for(Operation operacao : stack_control) {
+                System.out.println("This is the information in the stack control");
+                System.out.println(operacao.getOperationID());
+            }
+
+            for(Operation s : set_control) {
+                System.out.println("This is the information in the set control");
+                System.out.println(s.getOperationID());
+            }
+    
+
+
+
         }
+
+      
 
         List<String> sequence = new LinkedList<>();
         System.out.println("I will be stuck here");
@@ -425,8 +479,6 @@ public class BackTrackGraph {
         
 
         return sequence;
-
-
     }
 
     // It is better to have an array, the time complexity will be better
