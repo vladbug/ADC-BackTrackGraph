@@ -104,21 +104,21 @@ public class BackTrackGraph {
     }
 
     // This method will create the edges of the requires operation for our graph
-    private void createRequiresConnections() { // esta a dar merda aqui e nao sei porque
+    private void createRequiresConnections() { 
         Set<Operation> s = btg.vertexSet();
        
 
         for(Operation o : s) {
             List<String> requires_list = o.getRequires();
-            RequestBodySchema aaa = o.getRequestBody();
-            if(aaa != null) {
-                Schema esquima = null;
-                //esquima = spec.dereferenceSchema((ReferencedBodySchema) o.getRequestBody());
-                esquima = spec.dereferenceSchema(((ReferencedBodySchema) o.getRequestBody()).getName()); 
+            // RequestBodySchema aaa = o.getRequestBody();
+            // if(aaa != null) {
+            //     Schema esquima = null;
+            //     //esquima = spec.dereferenceSchema((ReferencedBodySchema) o.getRequestBody());
+            //     esquima = spec.dereferenceSchema(((ReferencedBodySchema) o.getRequestBody()).getName()); 
                 
-                System.out.println("Name : " +  esquima.getName() + " Type: " + esquima.getType());
+            //     System.out.println("Name : " +  esquima.getName() + " Type: " + esquima.getType());
                 
-            }
+            // }
            
             // if(esquima != null) {
             //     System.out.println("Name: " + esquima.getName() + " Type" + esquima.getType());
@@ -370,6 +370,7 @@ public class BackTrackGraph {
         return null;
     }
 
+    // Is this even generical enough?
     private List<String> parseRequires(List<String> requires) {
         List<String> parsed_requires = new LinkedList<>();
         // [response_code(GET /tournaments/{tournamentId}) == 200]

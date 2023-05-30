@@ -19,7 +19,7 @@ public class Main {
         Specification spec = Parser.parse(file_loc);
         
         // Creating standard operation dependency graph
-        OperationDependencyGraph odg = new OperationDependencyGraph(spec.getOperations());
+        //OperationDependencyGraph odg = new OperationDependencyGraph(spec.getOperations());
         BackTrackGraph btg = new BackTrackGraph(spec.getOperations());
         //btg.iterateAllEdges();
         //btg.inferAllLinks();
