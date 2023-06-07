@@ -46,11 +46,10 @@ public class BackTrackGraph {
     // we just need $4 and then we just se if the operation is less or equal
     private Map<Operation,Integer> postBag;
 
-    private Specification spec;
-    
-   
+    private Map<Operation,Cardinality> cardinalityInformation;
 
-    
+    private Specification spec;
+
     public BackTrackGraph(Map<String, Operation> operations) {
 
         btg = new DefaultDirectedGraph<>(null, null, false);
