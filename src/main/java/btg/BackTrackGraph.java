@@ -27,8 +27,6 @@ public class BackTrackGraph {
     // I still need the information in the operation but I need more than that
     private Graph<Operation,DefaultEdge> btg;
 
-    private Set<String> cache; // set com operações POST apenas para os multiple tests
-
     // Maybe instead of having a node we could have
     // a data structure that associates the operations
     // to the $? I think that would cost a lot tho
@@ -44,6 +42,9 @@ public class BackTrackGraph {
     // it may be usefull in the longrun for the $ generation in the tests
     private Map<Operation,List<String>> operationsRequires;
 
+    // I will do an optimization in here, instead of storing postT $1 $2 $3 $4 ...
+    // we just need $4 and then we just se if the operation is less or equal
+    private Map<Operation,Integer> postBag;
 
     private Specification spec;
     
@@ -55,6 +56,7 @@ public class BackTrackGraph {
         btg = new DefaultDirectedGraph<>(null, null, false);
         operationsURLs = new HashMap<>(100);
         operationsRequires = new HashMap<>(100);
+        postBag = new HashMap<>(100);
 
         // Adding every operation as a vertex
         for (Map.Entry<String, Operation> entry: operations.entrySet()) {
@@ -63,6 +65,8 @@ public class BackTrackGraph {
             // Will be stored like (POST /tournaments)
             operationsURLs.put("(" + o.getVerb() + " " + o.getUrl() + ")",o);
         }
+
+        
 
         try {
             String file_loc = "src/main/resources/tournaments-magmact-extended.json";
@@ -76,6 +80,8 @@ public class BackTrackGraph {
     
         createRequiresConnections();
         inferLinks_v3();
+        System.out.println("Printing postBag");
+        printPostBag();
 
         for(int j = 0; j < 50; j++) {
 
@@ -110,15 +116,18 @@ public class BackTrackGraph {
 
         for(Operation o : s) {
             List<String> requires_list = o.getRequires();
-            // RequestBodySchema aaa = o.getRequestBody();
-            // if(aaa != null) {
-            //     Schema esquima = null;
-            //     //esquima = spec.dereferenceSchema((ReferencedBodySchema) o.getRequestBody());
-            //     esquima = spec.dereferenceSchema(((ReferencedBodySchema) o.getRequestBody()).getName()); 
+            RequestBodySchema aaa = o.getRequestBody();
+            System.out.println("I am this operation " + o.getOperationID() + " "  + "and these are my requestBody parameters: ");
+            if(aaa != null) {
+                Schema esquima = null;
+                //esquima = spec.dereferenceSchema((ReferencedBodySchema) o.getRequestBody());
+                esquima = spec.dereferenceSchema(((ReferencedBodySchema) o.getRequestBody()).getName()); 
                 
-            //     System.out.println("Name : " +  esquima.getName() + " Type: " + esquima.getType());
+                System.out.println("Name : " +  esquima.getName() + " Type: " + esquima.getType());
                 
-            // }
+            }
+
+            System.out.println("------------------------------");
            
             // if(esquima != null) {
             //     System.out.println("Name: " + esquima.getName() + " Type" + esquima.getType());
@@ -150,6 +159,10 @@ public class BackTrackGraph {
                         //System.out.println(new_pre);
 
                         btg.addEdge(o,operationsURLs.get(new_pre) , new SelfEdge());
+
+                        // Here we will give information to our bag to know the "creators"
+                        postBag.put(o,0);
+
                     }
 
                     btg.addEdge(o,operationsURLs.get(new_pre) , new RequiresEdge());
@@ -175,6 +188,14 @@ public class BackTrackGraph {
         
     }
 
+    private void printPostBag() {
+        postBag.forEach((key,value) -> {
+            System.out.println(key.getOperationID() + value);
+            
+        }
+        );
+    }
+
    
     
     
@@ -188,10 +209,12 @@ public class BackTrackGraph {
         
         Set<Operation> set = new HashSet<>(btg.vertexSet());
         Set<Operation> operationsToAdd = new HashSet<>();
+        Set<Operation> operationsForTime = new HashSet<>();
 
         for(Operation o : set) {
             //System.out.println("This is the operation in question " + o.getOperationID());
             Set<DefaultEdge> edge_set = btg.incomingEdgesOf(o);
+            System.out.println("I am: " + o.getOperationID());
             for(DefaultEdge e : edge_set) {
                 // getPlayer : o
                 // a -> getPlayer
@@ -201,17 +224,33 @@ public class BackTrackGraph {
                     //btg.addEdge(btg.getEdgeTarget(e), o, new LinkEdge());
                     operationsToAdd.add(btg.getEdgeSource(e));
                 }
+
+                if(e instanceof RequiresEdge) {
+                    System.out.println("I am adding a link with" + btg.getEdgeSource(e).getOperationID());
+                    operationsForTime.add(btg.getEdgeSource(e));
+                }
+                
             
             }
 
             for(Operation o_add : operationsToAdd) {
                 btg.addEdge(o,o_add, new LinkEdge());
+                //btg.addEdge(o,o_add, new TimeEdge());
+                //Porque é um grafo com apenas arcos singulares para o mesmo node
+                System.out.println(btg.addEdge(o,o_add, new TimeEdge())); // we won't use this
+                for(Operation o_connect : operationsForTime) {
+                    btg.addEdge(o_connect, o_add, new TimeEdge());
+                    System.out.println("This is the edge that I added: " + o_connect.getOperationID() + " ---> " + o_add.getOperationID());
+                }
             }
 
+           
+            operationsForTime = new HashSet<>();
             operationsToAdd = new HashSet<>();
                
         }
     }
+
     public void iterateAllEdges() {
         Set<DefaultEdge> set = btg.edgeSet();
         for(DefaultEdge e : set) {
@@ -224,10 +263,20 @@ public class BackTrackGraph {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am self edged");
 
             }
-            else {
-                System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID());
+
+            else if(e instanceof LinkEdge) {
+                System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am linked edged");
 
             }
+
+            else if(e instanceof TimeEdge) {
+                System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am timed edged");
+            }
+            else {
+                System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am a requires edge");
+
+            }
+        
         }
     }
 
@@ -256,7 +305,7 @@ public class BackTrackGraph {
             Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(to_process);
 
             // Having the bag $ and the sequence $ , two different things
-            // In the sequence it is to differentiante resources
+            // In the sequence it is to differentiate resources
             for(DefaultEdge e : edge_set) {
                 Operation op = btg.getEdgeTarget(e);
                 //System.out.println("This is my target: " + op.getOperationID());
