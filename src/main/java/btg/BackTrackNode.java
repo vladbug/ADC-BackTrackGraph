@@ -1,10 +1,18 @@
 package btg;
 
-// This class will represent a node in our graph
-// We need this in order to associate a $
-// But do we? I think that the data structure would
-// cost a lot to maintain, but we just need 
-// the posts in there?
+import java.util.List;
+
+import parser_domain.Operation;
+
 public class BackTrackNode {
+
+    private Operation operation;
+
+    private List<Operation> operations;
+
+    
+
+
+
     
 }

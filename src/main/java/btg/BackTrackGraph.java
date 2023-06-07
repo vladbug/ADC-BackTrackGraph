@@ -241,6 +241,7 @@ public class BackTrackGraph {
                 for(Operation o_connect : operationsForTime) {
                     btg.addEdge(o_connect, o_add, new TimeEdge());
                     System.out.println("This is the edge that I added: " + o_connect.getOperationID() + " ---> " + o_add.getOperationID());
+                    
                 }
             }
 
