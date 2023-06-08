@@ -46,7 +46,7 @@ public class BackTrackGraph {
     // we just need $4 and then we just se if the operation is less or equal
     private Map<Operation,Integer> postBag;
 
-    private Map<Operation,Cardinality> cardinalityInformation;
+    //private Map<Operation,Cardinality> cardinalityInformation;
 
     private Specification spec;
 
@@ -81,6 +81,7 @@ public class BackTrackGraph {
         inferLinks_v3();
         System.out.println("Printing postBag");
         printPostBag();
+        littleTest();
 
         for(int j = 0; j < 50; j++) {
 
@@ -333,6 +334,98 @@ public class BackTrackGraph {
 
     }
 
+    public void littleTest() {
+        // (POST /tournaments)
+        // (POST /players)
+        // (POST /tournaments/{tournamentId}/enrollments)
+        Operation o1 = operationsURLs.get("(POST /tournaments)");
+        Operation o2 = operationsURLs.get("(POST /players)");
+        Operation o3 = operationsURLs.get("(POST /tournaments/{tournamentId}/enrollments)");
+
+        List<ReturnInfo> list = new LinkedList<>();
+
+        list.add(generateMultipleSequence(o1));
+        list.add(generateMultipleSequence(o2));
+        list.add(generateMultipleSequence(o3));
+
+        for(ReturnInfo i : list) {
+            System.out.println("Printing...");
+            Operation to_print = i.getOperation();
+            Map<Operation,Integer> m = i.getCardinalities();
+            System.out.println("This is the operation: " + to_print.getOperationID());
+            System.out.println("And these are my arguments: ");
+            m.forEach((key,value) -> {
+                System.out.println(key.getOperationID() + " $" + value);
+            });
+        }
+
+    }
+
+    // Maybe this should just work for the POST operations
+    private ReturnInfo generateMultipleSequence(Operation o) {
+        // I want to brute test this sequence
+        // 1_P : postPlayer
+        // 2_P : postPlayer
+        // 1_T : postTournament
+        // 1_E : postEnrollment
+        //Operation o = getRandomOperation();
+
+        // If the operation is in the bag it means
+        // that it is a "creator" operation
+        // aka POST
+
+        ReturnInfo information = new ReturnInfo(o);
+        System.out.println(o.getOperationID());
+        if(postBag.containsKey(o)) {
+            int cardinality = postBag.get(o);
+            cardinality++;
+            postBag.put(o, cardinality);
+            information.addCardinality(o,cardinality);
+        }
+        System.out.println("Got here");
+
+        // Now check if we have red links "this means we have arguments to feed our operation"
+      
+        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+        System.out.println("Did not get here");
+        Map<Operation,Integer> options = new HashMap<>();
+      
+        for(DefaultEdge e : edge_set) {
+            Operation op = btg.getEdgeTarget(e);
+            //System.out.println("This is my target: " + op.getOperationID());
+            System.out.println("Crashed here");
+            if(!(e instanceof SelfEdge) && !(e instanceof RequiresEdge)) {
+            
+                int c = postBag.get(op);
+                c++;
+                options.put(op,c);
+                
+            }
+            
+        }
+
+
+        // Now for each argument we want to generate a valid random number
+        
+        options.forEach((key,value) -> {
+       
+            // entre 0 e value - 1 original
+            // com +1 será entre 1 e value! é o que queremos
+            int rnd = new Random().nextInt(value) + 1;
+            
+            information.addCardinality(key, rnd);
+           
+            
+        }
+        );
+
+        return information;
+
+
+        // This should produce something like : postEnrollment 1 2
+
+    }
+
     private List<String> generateSequence(Operation o) {
          // This will generate a random number
         // between 0 and the bag.lenght - 1
@@ -408,6 +501,7 @@ public class BackTrackGraph {
 
         Set<Operation> operations = btg.vertexSet();
         int size = operations.size();
+        // Devolve numero aleatorio entre 0 e size - 1
         int rnd = new Random().nextInt(size);
         int i = 0;
         for(Operation o : operations) {
