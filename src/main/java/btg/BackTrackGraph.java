@@ -339,14 +339,21 @@ public class BackTrackGraph {
         // (POST /players)
         // (POST /tournaments/{tournamentId}/enrollments)
         Operation o1 = operationsURLs.get("(POST /tournaments)");
+        Operation o11 = operationsURLs.get("(POST /tournaments)");
         Operation o2 = operationsURLs.get("(POST /players)");
+        Operation o22 = operationsURLs.get("(POST /players)");
         Operation o3 = operationsURLs.get("(POST /tournaments/{tournamentId}/enrollments)");
+        Operation o33 = operationsURLs.get("(POST /tournaments/{tournamentId}/enrollments)");
+
 
         List<ReturnInfo> list = new LinkedList<>();
 
         list.add(generateMultipleSequence(o1));
+        list.add(generateMultipleSequence(o11));
         list.add(generateMultipleSequence(o2));
+        list.add(generateMultipleSequence(o22));
         list.add(generateMultipleSequence(o3));
+        list.add(generateMultipleSequence(o33));
 
         for(ReturnInfo i : list) {
             System.out.println("Printing...");
@@ -382,22 +389,24 @@ public class BackTrackGraph {
             postBag.put(o, cardinality);
             information.addCardinality(o,cardinality);
         }
-        System.out.println("Got here");
-
+       
         // Now check if we have red links "this means we have arguments to feed our operation"
-      
         Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
-        System.out.println("Did not get here");
+        
         Map<Operation,Integer> options = new HashMap<>();
       
         for(DefaultEdge e : edge_set) {
             Operation op = btg.getEdgeTarget(e);
             //System.out.println("This is my target: " + op.getOperationID());
-            System.out.println("Crashed here");
+         
             if(!(e instanceof SelfEdge) && !(e instanceof RequiresEdge)) {
-            
+                
                 int c = postBag.get(op);
-                c++;
+                if(!(postBag.containsKey(op))) { // caso nao queiramos criar novos cardinais!
+                    c++; // ele no postEnrollment incrementa os valores no postPlayer e postTournament
+                    // isto é aquele problema do arcos vermelhos que eu nao queria aqui!  
+                }
+
                 options.put(op,c);
                 
             }
@@ -409,10 +418,11 @@ public class BackTrackGraph {
         
         options.forEach((key,value) -> {
        
+            // se for zero entao o unico valor possivel será 1
             // entre 0 e value - 1 original
             // com +1 será entre 1 e value! é o que queremos
             int rnd = new Random().nextInt(value) + 1;
-            
+            System.out.println("This is the random number generated: " + rnd);
             information.addCardinality(key, rnd);
            
             
