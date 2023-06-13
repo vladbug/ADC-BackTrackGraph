@@ -83,6 +83,7 @@ public class BackTrackGraph {
         printPostBag();
         littleTest();
 
+        /** 
         for(int j = 0; j < 50; j++) {
 
             System.out.println("This is a new test sequence!");
@@ -93,6 +94,7 @@ public class BackTrackGraph {
             System.out.println("------------------------------");
 
         }
+        */
     
     }
 
@@ -369,6 +371,7 @@ public class BackTrackGraph {
     }
 
     // Maybe this should just work for the POST operations
+    // This has no back track involved to it yet
     private ReturnInfo generateMultipleSequence(Operation o) {
         // I want to brute test this sequence
         // 1_P : postPlayer
@@ -382,7 +385,7 @@ public class BackTrackGraph {
         // aka POST
 
         ReturnInfo information = new ReturnInfo(o);
-        System.out.println(o.getOperationID());
+        //System.out.println(o.getOperationID());
         if(postBag.containsKey(o)) {
             int cardinality = postBag.get(o);
             cardinality++;
