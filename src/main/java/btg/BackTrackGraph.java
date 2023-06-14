@@ -1,5 +1,6 @@
 package btg;
 
+import java.sql.Time;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -88,7 +89,9 @@ public class BackTrackGraph {
         inferLinks_v3();
         System.out.println("Printing postBag");
         printPostBag();
-        littleTest();
+        System.out.println("Generation little test");
+        littleTest2();
+        System.out.println("Finished generating little test");
 
         /** 
         for(int j = 0; j < 50; j++) {
@@ -291,7 +294,8 @@ public class BackTrackGraph {
     }
 
     // This method will generate one sequence
-    private List<String> generateSequence() {
+    private List<ReturnInfo> generateSequence() {
+        List<ReturnInfo> toReturn = new LinkedList<>();
         // This will generate a random number
         // between 0 and the bag.lenght - 1
         // With this we will be able to get
@@ -300,6 +304,7 @@ public class BackTrackGraph {
         Stack<Operation> stack_return = new Stack<>();
         Stack<Operation> stack_control = new Stack<>();
         Set<Operation> set_control = new HashSet<>();
+        Stack<ReturnInfo> stack_information = new Stack<>();
         // int rndNumber = rnd.nextInt(bag.length);
         Operation o = getRandomOperation();
         stack_return.add(o);
@@ -310,6 +315,7 @@ public class BackTrackGraph {
 
         while(!stack_control.isEmpty()) {
             Operation to_process = stack_control.pop();
+            ReturnInfo information = generateMultipleSequenceV2(to_process);
             //System.out.println(to_process.getOperationID());
             // Now given that operation we will backtrack
             Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(to_process);
@@ -321,6 +327,7 @@ public class BackTrackGraph {
                 //System.out.println("This is my target: " + op.getOperationID());
                 if(!(e instanceof SelfEdge) && !set_control.contains(op)) {
                     stack_return.add(op);
+                    stack_information.add(information);
                     stack_control.add(op);
                     set_control.add(op);
                 }
@@ -336,9 +343,13 @@ public class BackTrackGraph {
         while(!stack_return.isEmpty()) {
             sequence.add(stack_return.pop().getOperationID());
         }
+
+        while(!stack_information.isEmpty()) {
+            toReturn.add(stack_information.pop());
+        }
         
 
-        return sequence;
+        return toReturn;
 
 
     }
@@ -376,6 +387,40 @@ public class BackTrackGraph {
             });
         }
 
+    }
+
+    public void littleTest2() {
+        List<ReturnInfo> toReturn = new LinkedList<>();
+        Operation o1 = operationsURLs.get("(POST /tournaments)");
+        Operation o11 = operationsURLs.get("(POST /tournaments)");
+        Operation o111 = operationsURLs.get("(POST /tournaments)");
+        Operation o1111 = operationsURLs.get("(POST /tournaments)");
+        Operation o2 = operationsURLs.get("(POST /players)");
+        Operation o22 = operationsURLs.get("(POST /players)");
+        Operation o3 = operationsURLs.get("(POST /tournaments/{tournamentId}/enrollments)");
+        Operation o33 = operationsURLs.get("(POST /tournaments/{tournamentId}/enrollments)");
+        Operation o4 = operationsURLs.get("(DELETE /tournaments/{tournamentId}/enrollments/{playerNIF})");
+        toReturn.add(generateMultipleSequenceV2(o1));
+        toReturn.add(generateMultipleSequenceV2(o11));
+        toReturn.add(generateMultipleSequenceV2(o111));
+        toReturn.add(generateMultipleSequenceV2(o1111));
+        toReturn.add(generateMultipleSequenceV2(o2));
+        toReturn.add(generateMultipleSequenceV2(o22));
+        toReturn.add(generateMultipleSequenceV2(o3));
+        toReturn.add(generateMultipleSequenceV2(o4));
+        
+
+        for(ReturnInfo i : toReturn) {
+            System.out.println(i.getOperation().getOperationID() + i.getOperationCardinality());
+            System.out.println("And these are my arguments");
+            Map<Operation,Integer> options = i.getCardinalities();
+
+            options.forEach((key,value) -> {
+                System.out.println(key.getOperationID() + " " + value);
+            }
+            );
+
+        }
     }
 
     private void setNewCardinality(Operation o, ReturnInfo r) {
@@ -427,6 +472,55 @@ public class BackTrackGraph {
             // if we are developing a big sequence and we delete a resource it should be possible after
             // the deletion to create and post of that, we will have to update the postBag but how?
             // we cannot just decrement the variable we must know specificaly what it is
+        } else {
+            // If we are here this means that this is a deletion, update or getter
+            Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+            // We should accept the links also (they are the base getters)
+            boolean timed = false;
+            Operation timed_operation = null;
+
+            for(DefaultEdge e : edge_set) {
+                if(e instanceof TimeEdge) {
+                    Operation op = btg.getEdgeTarget(e);
+                    
+                    Set<DefaultEdge> neighbour_edge_set = btg.outgoingEdgesOf(op); // TODO: maybe the degree might work just fine
+                    for(DefaultEdge ee : neighbour_edge_set) {
+                        if(ee instanceof TimeEdge){
+                            timed = true;
+                            timed_operation = op;
+                            break;
+                        }
+                    }
+                }
+
+                if(timed) break;
+            }
+
+            if(timed) {
+                int c = postBag.get(timed_operation);
+                ReturnInfo timed_r = returnalInformation.get(timed_operation.getOperationID()+"$"+c);
+
+                r.setOperationCardinality(c);
+                r.addCardinality(timed_operation,c);
+                Map<Operation,Integer> options = timed_r.getCardinalities();
+                options.forEach((key,value) -> {
+                    r.addCardinality(key, value);
+                }
+                );  
+            } else {
+                for(DefaultEdge e : edge_set) {
+                    if(!(e instanceof SelfEdge) && !(e instanceof RequiresEdge)) {
+                        Operation op = btg.getEdgeTarget(e);
+                        int c = postBag.get(op);
+                        r.setOperationCardinality(c);
+                        r.addCardinality(op,c);
+
+                    }
+                }
+            }
+
+
+
         }
     }
 
@@ -438,12 +532,10 @@ public class BackTrackGraph {
 
     private ReturnInfo generateMultipleSequenceV2(Operation o) {
         ReturnInfo information = new ReturnInfo(o);
-
         setNewCardinality(o, information);
-
-        returnalInformation.put("",information);
-
-        return null;
+        // we will store postEnrollment$1 in here, will be used for deletions,getters and updates
+        returnalInformation.put(o.getOperationID()+"$"+information.getOperationCardinality(),information);
+        return information;
     }
 
     // Maybe this should just work for the POST operations
