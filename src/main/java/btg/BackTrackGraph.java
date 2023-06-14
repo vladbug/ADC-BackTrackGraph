@@ -46,6 +46,12 @@ public class BackTrackGraph {
     // we just need $4 and then we just se if the operation is less or equal
     private Map<Operation,Integer> postBag;
 
+
+    // This will map , postTournamente$1 into the returnalInformation of the same
+    private Map<String,ReturnInfo> returnalInformation;
+
+    private List<ReturnInfo> testSequence;
+
     //private Map<Operation,Cardinality> cardinalityInformation;
 
     private Specification spec;
@@ -56,6 +62,7 @@ public class BackTrackGraph {
         operationsURLs = new HashMap<>(100);
         operationsRequires = new HashMap<>(100);
         postBag = new HashMap<>(100);
+        returnalInformation = new HashMap<>(100);
 
         // Adding every operation as a vertex
         for (Map.Entry<String, Operation> entry: operations.entrySet()) {
@@ -346,6 +353,7 @@ public class BackTrackGraph {
         Operation o22 = operationsURLs.get("(POST /players)");
         Operation o3 = operationsURLs.get("(POST /tournaments/{tournamentId}/enrollments)");
         Operation o33 = operationsURLs.get("(POST /tournaments/{tournamentId}/enrollments)");
+        Operation o4 = operationsURLs.get("(DELETE /tournaments/{tournamentId}/enrollments)");
 
 
         List<ReturnInfo> list = new LinkedList<>();
@@ -368,6 +376,74 @@ public class BackTrackGraph {
             });
         }
 
+    }
+
+    private void setNewCardinality(Operation o, ReturnInfo r) {
+
+        // This means that we are dealing with a "creator"
+        if(postBag.containsKey(o)) {
+            int cardinality = postBag.get(o);
+            // We want to increase the cardinality
+            cardinality++;
+            // Update it in the global data structure
+            postBag.put(o,cardinality);
+            // Set the own operation cardinality
+            // Only the POST operations will be creating these new cardinalities
+            // PS: but if we are back tracking we need to give attention to this
+            r.setOperationCardinality(cardinality);
+
+            Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+
+            for(DefaultEdge e : edge_set) {
+                
+                Operation op = btg.getEdgeTarget(e);
+                if(!(e instanceof SelfEdge) && !(e instanceof RequiresEdge)) {
+                    // In this example only postEnrollment will enter here
+                    int c = postBag.get(op);
+                    if(c == 0) {
+                        // It doesn't exist so we will have to back track, if we got here
+                        // This means that we have one of the three scenarios on the paper
+                        // We will have to back-track but at the same time give the
+                        // cardinality to our postEnrollment method
+                        backTrackPost(op,c+1);
+                        r.addCardinality(op,c+1);
+                        postBag.put(op,c+1); // talvez nao metia ja e ele tratava disso no backtrack?
+                    } else {
+                        // This means that there is a resource somewhere, let's just pick one
+                        int rnd = new Random().nextInt(c) + 1;
+                        r.addCardinality(op, rnd);
+                    }
+
+                }
+                
+            }
+
+            // In the end of this we will have a postEnrollmentReturnInfo with
+            // postEnrollment $1 , postPlayer $1, postTournament $1 but the tournament is yet to be created
+            // I think that this won't be a problem because the backtrack will eventually get there and create a post
+
+            // IMPORTANT : when generating another postEnrollment we must be sure that the arguments
+            // are different from an already existing postEnrollment! Also another thing that came to my mind
+            // if we are developing a big sequence and we delete a resource it should be possible after
+            // the deletion to create and post of that, we will have to update the postBag but how?
+            // we cannot just decrement the variable we must know specificaly what it is
+        }
+    }
+
+    private void backTrackPost(Operation op,int cardinality) {
+        // We received a call to "backtrack" the operation
+        // We can make a "call back promise?"
+
+    }
+
+    private ReturnInfo generateMultipleSequenceV2(Operation o) {
+        ReturnInfo information = new ReturnInfo(o);
+
+        setNewCardinality(o, information);
+
+        returnalInformation.put("",information);
+
+        return null;
     }
 
     // Maybe this should just work for the POST operations

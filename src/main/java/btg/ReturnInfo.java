@@ -9,11 +9,21 @@ public class ReturnInfo {
 
     private Operation operation; // the father operation
 
+    private int operation_cardinality;
+
     private Map<Operation,Integer> cardinalities;
 
     public ReturnInfo(Operation operation) {
         this.operation = operation;
         cardinalities = new HashMap<>();
+    }
+
+    public void setOperationCardinality(int c) {
+        operation_cardinality = c;
+    }
+
+    public int getOperationCardinality() {
+        return operation_cardinality;
     }
 
     public Operation getOperation() {
