@@ -1,14 +1,18 @@
 package btg;
 
 import java.sql.Time;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeMap;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
@@ -17,8 +21,6 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DefaultUndirectedGraph;
 import org.jgrapht.graph.SimpleDirectedGraph;
 
-import parser_domain.Operation;
-import parser_domain.Schema;
 import parser_domain.*;
 import parser.Parser;
 
@@ -90,10 +92,10 @@ public class BackTrackGraph {
         System.out.println("Printing postBag");
         printPostBag();
         System.out.println("Generation little test");
-        littleTest2();
+        //littleTest2();
         System.out.println("Finished generating little test");
-
-        /** 
+        //countTest();
+        
         for(int j = 0; j < 50; j++) {
 
             System.out.println("This is a new test sequence!");
@@ -104,7 +106,7 @@ public class BackTrackGraph {
             System.out.println("------------------------------");
 
         }
-        */
+        
     
     }
 
@@ -293,9 +295,90 @@ public class BackTrackGraph {
         }
     }
 
+    public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> unsortMap) {
+
+        List<Map.Entry<K, V>> list =
+                new LinkedList<Map.Entry<K, V>>(unsortMap.entrySet());
+
+        Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
+            public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
+                return (o2.getValue()).compareTo(o1.getValue());
+            }
+        });
+
+        Map<K, V> result = new LinkedHashMap<K, V>();
+        for (Map.Entry<K, V> entry : list) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+
+        return result;
+
+    }
+    
+    public void countTest() {
+
+        Operation o4 = operationsURLs.get("(DELETE /tournaments/{tournamentId}/enrollments/{playerNIF})");
+        countOutGoingEdges(btg.outgoingEdgesOf(o4));
+
+
+    }
+
+    // We need this function to make sure that some postOperations come before others!
+    private Map<Operation,Integer> countOutGoingEdges(Set<DefaultEdge> set) {
+
+        Map<Operation,Integer> order = new HashMap<>();
+
+        for(DefaultEdge e : set) {
+            if(e instanceof TimeEdge || e instanceof LinkEdge) {
+                Operation op = btg.getEdgeTarget(e);
+                //System.out.println(op.getOperationID());
+                int neighbour_edge_degree = btg.outDegreeOf(op);
+                order.put(op,neighbour_edge_degree);
+
+            }
+        }
+
+        Map<Operation,Integer> treeMap = sortByValue(order);
+
+        treeMap.forEach((key,value) -> {
+            //System.out.println(key.getOperationID() + " " + value);
+        }
+        );
+
+        return treeMap;
+
+    }
+
+    private List<ReturnInfo> generateUpgradedSequence(Operation o) {
+
+        Stack<ReturnInfo> returnal = new Stack<>();
+
+        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+
+            for(DefaultEdge e : edge_set) {
+                if(e instanceof TimeEdge || e instanceof SelfEdge) {
+                    Operation op = btg.getEdgeTarget(e);
+                    
+                    int neighbour_edge_degree = btg.outDegreeOf(op);
+
+                    if(neighbour_edge_degree > 1) {
+                        // We are dealing with a non canon creator let's name it like that
+                        // We wan't this one to appear first
+                        returnal.push(null);
+
+                    }
+                    
+                }
+            }
+
+
+
+        return null;
+    }
+
     // This method will generate one sequence
-    private List<ReturnInfo> generateSequence() {
-        List<ReturnInfo> toReturn = new LinkedList<>();
+    private List<String> generateSequence() {
+        //List<ReturnInfo> toReturn = new LinkedList<>();
         // This will generate a random number
         // between 0 and the bag.lenght - 1
         // With this we will be able to get
@@ -304,7 +387,7 @@ public class BackTrackGraph {
         Stack<Operation> stack_return = new Stack<>();
         Stack<Operation> stack_control = new Stack<>();
         Set<Operation> set_control = new HashSet<>();
-        Stack<ReturnInfo> stack_information = new Stack<>();
+        //Stack<ReturnInfo> stack_information = new Stack<>();
         // int rndNumber = rnd.nextInt(bag.length);
         Operation o = getRandomOperation();
         stack_return.add(o);
@@ -315,25 +398,34 @@ public class BackTrackGraph {
 
         while(!stack_control.isEmpty()) {
             Operation to_process = stack_control.pop();
-            ReturnInfo information = generateMultipleSequenceV2(to_process);
+            //ReturnInfo information = generateMultipleSequenceV2(to_process);
             //System.out.println(to_process.getOperationID());
             // Now given that operation we will backtrack
             Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(to_process);
+            Map<Operation,Integer> to_iterate = countOutGoingEdges(edge_set);
+            to_iterate.forEach((key,value) -> {
 
+                if(!set_control.contains(key)) {
+                    stack_return.add(key);
+                    stack_control.add(key);
+                    set_control.add(key);
+                }
+                
+            });
             // Having the bag $ and the sequence $ , two different things
             // In the sequence it is to differentiate resources
-            for(DefaultEdge e : edge_set) {
-                Operation op = btg.getEdgeTarget(e);
-                //System.out.println("This is my target: " + op.getOperationID());
-                if(!(e instanceof SelfEdge) && !set_control.contains(op)) {
-                    stack_return.add(op);
-                    stack_information.add(information);
-                    stack_control.add(op);
-                    set_control.add(op);
-                }
+            // for(DefaultEdge e : edge_set) {
+            //     Operation op = btg.getEdgeTarget(e);
+            //     //System.out.println("This is my target: " + op.getOperationID());
+            //     if(!(e instanceof SelfEdge) && !set_control.contains(op)) {
+            //         stack_return.add(op);
+            //         //stack_information.add(information);
+            //         stack_control.add(op);
+            //         set_control.add(op);
+            //     }
                
             
-            }
+            // }
 
         }
 
@@ -344,12 +436,12 @@ public class BackTrackGraph {
             sequence.add(stack_return.pop().getOperationID());
         }
 
-        while(!stack_information.isEmpty()) {
-            toReturn.add(stack_information.pop());
-        }
+        // while(!stack_information.isEmpty()) {
+        //     toReturn.add(stack_information.pop());
+        // }
         
 
-        return toReturn;
+        return sequence;
 
 
     }
@@ -401,12 +493,12 @@ public class BackTrackGraph {
         Operation o33 = operationsURLs.get("(POST /tournaments/{tournamentId}/enrollments)");
         Operation o4 = operationsURLs.get("(DELETE /tournaments/{tournamentId}/enrollments/{playerNIF})");
         toReturn.add(generateMultipleSequenceV2(o1));
-        toReturn.add(generateMultipleSequenceV2(o11));
-        toReturn.add(generateMultipleSequenceV2(o111));
-        toReturn.add(generateMultipleSequenceV2(o1111));
-        toReturn.add(generateMultipleSequenceV2(o2));
-        toReturn.add(generateMultipleSequenceV2(o22));
-        toReturn.add(generateMultipleSequenceV2(o3));
+        // toReturn.add(generateMultipleSequenceV2(o11));
+        // toReturn.add(generateMultipleSequenceV2(o111));
+        // toReturn.add(generateMultipleSequenceV2(o1111));
+        // toReturn.add(generateMultipleSequenceV2(o2));
+        // toReturn.add(generateMultipleSequenceV2(o22));
+        // toReturn.add(generateMultipleSequenceV2(o3));
         toReturn.add(generateMultipleSequenceV2(o4));
         
 
@@ -498,7 +590,19 @@ public class BackTrackGraph {
 
             if(timed) {
                 int c = postBag.get(timed_operation);
+                System.out.println(timed_operation.getOperationID()+"$"+c);
                 ReturnInfo timed_r = returnalInformation.get(timed_operation.getOperationID()+"$"+c);
+
+                // The problem here is if we feed this with an delete/update/get
+                // before having a POST this will just explode because it is not stored into the datastructure
+                if(timed_r == null) {
+                    // This means that there is not a corresponding post for this operations
+                    // But here lies another problem
+                    // If we are doing a delete i will seek for a postEnrollment but that postEnrollment must
+                    // seek for a postTournament and a postPlayer
+                    // note : create a "seek" operation
+
+                }
 
                 r.setOperationCardinality(c);
                 r.addCardinality(timed_operation,c);
@@ -605,74 +709,6 @@ public class BackTrackGraph {
 
         // This should produce something like : postEnrollment 1 2
 
-    }
-
-    private List<String> generateSequence(Operation o) {
-         // This will generate a random number
-        // between 0 and the bag.lenght - 1
-        // With this we will be able to get
-        // a random element from the array
-        // Random rnd = new Random();
-        Stack<Operation> stack_return = new Stack<>();
-        Stack<Operation> stack_control = new Stack<>();
-        Set<Operation> set_control = new HashSet<>();
-        // int rndNumber = rnd.nextInt(bag.length);
-        stack_return.add(o);
-        stack_control.add(o);
-        set_control.add(o);
-        System.out.println(set_control.contains(o));
-
-        System.out.println("I am entering the first while");
-
-        while(!stack_control.isEmpty()) {
-            Operation to_process = stack_control.pop();
-            System.out.println(to_process.getOperationID());
-            // Now given that operation we will backtrack
-            Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(to_process);
-          
-
-            // Having the bag $ and the sequence $ , two different things
-            // In the sequence it is to differentiante resources
-            for(DefaultEdge e : edge_set) {
-                Operation op = btg.getEdgeTarget(e);
-                System.out.println("This is my target: " + op.getOperationID());
-                System.out.println(set_control.contains(op));
-                if(!(e instanceof SelfEdge) && !set_control.contains(op)) {
-                    stack_return.add(op);
-                    stack_control.add(op);
-                    set_control.add(op);
-                    System.out.println("I contatin now this operation: " + op.getOperationID() + " " + set_control.contains(o));
-
-                }
-               
-            
-            }
-
-            for(Operation operacao : stack_control) {
-                System.out.println("This is the information in the stack control");
-                System.out.println(operacao.getOperationID());
-            }
-
-            for(Operation s : set_control) {
-                System.out.println("This is the information in the set control");
-                System.out.println(s.getOperationID());
-            }
-    
-
-
-
-        }
-
-      
-
-        List<String> sequence = new LinkedList<>();
-        System.out.println("I will be stuck here");
-        while(!stack_return.isEmpty()) {
-            sequence.add(stack_return.pop().getOperationID());
-        }
-        
-
-        return sequence;
     }
 
     // It is better to have an array, the time complexity will be better
