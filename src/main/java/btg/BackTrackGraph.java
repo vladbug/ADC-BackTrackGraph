@@ -96,16 +96,25 @@ public class BackTrackGraph {
         System.out.println("Finished generating little test");
         //countTest();
         
-        for(int j = 0; j < 50; j++) {
+       
 
             System.out.println("This is a new test sequence!");
-            List<String> response = generateSequence();
-            for(String s : response) {
-                System.out.println(s);
+            List<ReturnInfo> response = generateSequence(30);
+            System.out.println("And these are my arguments: ");
+            for(ReturnInfo s : response) {
+                System.out.println("------------------------------");
+                System.out.println(s.getOperation().getOperationID() + " " + "$"+s.getOperationCardinality());
+                Map<Operation,Integer> map = s.getCardinalities();
+                System.out.println("These are the arguments for: " + s.getOperation().getOperationID());
+                map.forEach((key,value) ->  {
+                    System.out.println(key.getOperationID() + " " + "$"+value);
+                });
+                System.out.println("------------------------------");
             }
             System.out.println("------------------------------");
 
-        }
+        
+        
         
     
     }
@@ -377,16 +386,19 @@ public class BackTrackGraph {
     }
 
     // This method will generate one sequence
-    private List<String> generateSequence() {
+    private List<ReturnInfo> generateSequence(int limit) {
+        List<ReturnInfo> toReturn = new LinkedList<>();
+        Stack<Operation> stack_return = new Stack<>();
+        Stack<Operation> stack_control = new Stack<>();
+        Set<Operation> set_control = new HashSet<>(); // este é capaz de ter que estar dentro do for mas ya
+        for(int i = 0; i < limit;i++) {
         //List<ReturnInfo> toReturn = new LinkedList<>();
         // This will generate a random number
         // between 0 and the bag.lenght - 1
         // With this we will be able to get
         // a random element from the array
         // Random rnd = new Random();
-        Stack<Operation> stack_return = new Stack<>();
-        Stack<Operation> stack_control = new Stack<>();
-        Set<Operation> set_control = new HashSet<>();
+        
         //Stack<ReturnInfo> stack_information = new Stack<>();
         // int rndNumber = rnd.nextInt(bag.length);
         Operation o = getRandomOperation();
@@ -412,38 +424,30 @@ public class BackTrackGraph {
                 }
                 
             });
-            // Having the bag $ and the sequence $ , two different things
-            // In the sequence it is to differentiate resources
-            // for(DefaultEdge e : edge_set) {
-            //     Operation op = btg.getEdgeTarget(e);
-            //     //System.out.println("This is my target: " + op.getOperationID());
-            //     if(!(e instanceof SelfEdge) && !set_control.contains(op)) {
-            //         stack_return.add(op);
-            //         //stack_information.add(information);
-            //         stack_control.add(op);
-            //         set_control.add(op);
-            //     }
-               
-            
-            // }
-
         }
 
 
-        List<String> sequence = new LinkedList<>();
+        List<Operation> sequence = new LinkedList<>();
+        
         //System.out.println("I will be stuck here");
         while(!stack_return.isEmpty()) {
-            sequence.add(stack_return.pop().getOperationID());
+            sequence.add(stack_return.pop());
         }
 
         // while(!stack_information.isEmpty()) {
         //     toReturn.add(stack_information.pop());
         // }
         
+        for(Operation op : sequence) {
+            ReturnInfo r = generateMultipleSequenceV2(op);
+            toReturn.add(r);
+        }
 
-        return sequence;
+        //returnalInformation = new HashMap<>();
+        //postBag = new HashMap<>();
+        }
 
-
+        return toReturn;
     }
 
     public void littleTest() {
@@ -542,7 +546,6 @@ public class BackTrackGraph {
                         // This means that we have one of the three scenarios on the paper
                         // We will have to back-track but at the same time give the
                         // cardinality to our postEnrollment method
-                        backTrackPost(op,c+1);
                         r.addCardinality(op,c+1);
                         postBag.put(op,c+1); // talvez nao metia ja e ele tratava disso no backtrack?
                     } else {
@@ -590,8 +593,8 @@ public class BackTrackGraph {
 
             if(timed) {
                 int c = postBag.get(timed_operation);
-                System.out.println(timed_operation.getOperationID()+"$"+c);
-                ReturnInfo timed_r = returnalInformation.get(timed_operation.getOperationID()+"$"+c);
+                //System.out.println(timed_operation.getOperationID()+"$"+c);
+                ReturnInfo timed_r = returnalInformation.get(timed_operation.getOperationID()+"$"+c); // aqui ate pode ser um c aleatorio!!!
 
                 // The problem here is if we feed this with an delete/update/get
                 // before having a POST this will just explode because it is not stored into the datastructure
@@ -601,7 +604,10 @@ public class BackTrackGraph {
                     // If we are doing a delete i will seek for a postEnrollment but that postEnrollment must
                     // seek for a postTournament and a postPlayer
                     // note : create a "seek" operation
-
+                    // If it is null this means that we are in the beginning of everything!
+                    //int c_of_timed = postBag.get(timed_operation);
+                    //r.addCardinality(o, c_of_timed++);
+                    System.out.println("The timed operation does not exist yet");
                 }
 
                 r.setOperationCardinality(c);
@@ -626,12 +632,6 @@ public class BackTrackGraph {
 
 
         }
-    }
-
-    private void backTrackPost(Operation op,int cardinality) {
-        // We received a call to "backtrack" the operation
-        // We can make a "call back promise?"
-
     }
 
     private ReturnInfo generateMultipleSequenceV2(Operation o) {
