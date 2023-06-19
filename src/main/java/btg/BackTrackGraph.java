@@ -26,36 +26,47 @@ import parser.Parser;
 
 public class BackTrackGraph {
 
-    // I need more information on the node, how do I do that?
-    // I still need the information in the operation but I need more than that
+    /*
+     * This is the main graph, it will use our operations as
+     * nodes and we will have multiple types of edges
+     * but we could just use the DefaultEdge from the
+     * jgrapht library to represent all of them
+     */
     private Graph<Operation,DefaultEdge> btg;
 
-    // Maybe instead of having a node we could have
-    // a data structure that associates the operations
-    // to the $? I think that would cost a lot tho
-
-
-    // This map will map the operations URL to the corresponding IDs
-    // This will be usefull to help to generate the requires connections
+    /**
+     * This is map stores the operations based on their URLs
+     * so for an URL we will have an operation associated to it
+     */
     private Map<String,Operation> operationsURLs; 
 
-    // This map will map a number to the operation, this will be used 
 
-    // This map will be responsible to assign the operation to it's requires list
-    // it may be usefull in the longrun for the $ generation in the tests
+    /**
+     * This map will be responsible to assign the operation to it's requires list
+    */
     private Map<Operation,List<String>> operationsRequires;
 
-    // I will do an optimization in here, instead of storing postT $1 $2 $3 $4 ...
-    // we just need $4 and then we just se if the operation is less or equal
-    private Map<Operation,Integer> postBag;
+    /**
+     * This map will be responsible to store the operations according to their operationIDs
+    */
 
+    private Map<String,Operation> operationIDS;
+
+    /**
+     * This map will map the VERB of the operation to the operation
+     * 
+     */
+
+    private Map<Operation,String> operationVerbs;
+
+    /**
+     * This Bag will store the operations that are the "creators"
+     * of things
+     */
+    private Map<Operation,Integer> postBag;
 
     // This will map , postTournamente$1 into the returnalInformation of the same
     private Map<String,ReturnInfo> returnalInformation;
-
-    private List<ReturnInfo> testSequence;
-
-    //private Map<Operation,Cardinality> cardinalityInformation;
 
     private Specification spec;
 
@@ -66,16 +77,21 @@ public class BackTrackGraph {
         operationsRequires = new HashMap<>(100);
         postBag = new HashMap<>(100);
         returnalInformation = new HashMap<>(100);
+        operationIDS = new HashMap<>(100);
+        operationVerbs = new HashMap<>(100);
 
         // Adding every operation as a vertex
         for (Map.Entry<String, Operation> entry: operations.entrySet()) {
             Operation o = entry.getValue();
+            // Constructing the graph
             btg.addVertex(o);
             // Will be stored like (POST /tournaments)
             operationsURLs.put("(" + o.getVerb() + " " + o.getUrl() + ")",o);
+            // Will be store like postTournament Operation : postTournament
+            operationIDS.put(o.getOperationID(),o);
+            // Will be store Operation and the VERB associated
+            operationVerbs.put(o,o.getVerb());
         }
-
-        
 
         try {
             String file_loc = "src/main/resources/tournaments-magmact-extended.json";
@@ -89,34 +105,24 @@ public class BackTrackGraph {
     
         createRequiresConnections();
         inferLinks_v3();
-        System.out.println("Printing postBag");
-        printPostBag();
-        System.out.println("Generation little test");
-        //littleTest2();
-        System.out.println("Finished generating little test");
-        //countTest();
+       
         
        
-
-            System.out.println("This is a new test sequence!");
-            List<ReturnInfo> response = generateSequence(30);
-            System.out.println("And these are my arguments: ");
-            for(ReturnInfo s : response) {
-                System.out.println("------------------------------");
-                System.out.println(s.getOperation().getOperationID() + " " + "$"+s.getOperationCardinality());
-                Map<Operation,Integer> map = s.getCardinalities();
-                System.out.println("These are the arguments for: " + s.getOperation().getOperationID());
-                map.forEach((key,value) ->  {
-                    System.out.println(key.getOperationID() + " " + "$"+value);
-                });
-                System.out.println("------------------------------");
-            }
+        System.out.println("This is a new test sequence!");
+        List<ReturnInfo> response = generateSequence(30);
+        System.out.println("And these are my arguments: ");
+        for(ReturnInfo s : response) {
             System.out.println("------------------------------");
+            System.out.println(s.getOperation().getOperationID() + " " + "$"+s.getOperationCardinality());
+            Map<Operation,Integer> map = s.getCardinalities();
+            System.out.println("These are the arguments for: " + s.getOperation().getOperationID());
+            map.forEach((key,value) ->  {
+                System.out.println(key.getOperationID() + " " + "$"+value);
+            });
+            System.out.println("------------------------------");
+        }
+        System.out.println("------------------------------");
 
-        
-        
-        
-    
     }
 
 
@@ -280,6 +286,7 @@ public class BackTrackGraph {
         for(DefaultEdge e : set) {
             Operation o_source = btg.getEdgeSource(e);
             Operation o_target = btg.getEdgeTarget(e);
+            // É um grafo direcionado
             //System.out.println(btg.getEdge(o_source, o_target)); // esta existe 
             //System.out.println(btg.getEdge(o_target, o_source)); // esta nao existe e ele devolve null, é o correto
             
@@ -347,6 +354,7 @@ public class BackTrackGraph {
             }
         }
 
+        // Necessário para a ordem dos posts ser a correta
         Map<Operation,Integer> treeMap = sortByValue(order);
 
         treeMap.forEach((key,value) -> {
