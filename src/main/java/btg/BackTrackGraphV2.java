@@ -343,7 +343,7 @@ public class BackTrackGraphV2 {
      * operation it is and perform logic into it
      * in order to append to the returnal list
      */
-    private void resolve(Operation o, List<Information> toReturn) {
+    private List<Information> resolve(Operation o, List<Information> toReturn) {
 
         switch(o.getVerb()) {
 
@@ -369,7 +369,7 @@ public class BackTrackGraphV2 {
         }
     }
 
-    private void copeWithPost(Operation o, List<Information> seq) {
+    private List<Information> copeWithPost(Operation o, List<Information> seq) {
 
         Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
         boolean simple = true;
@@ -382,15 +382,15 @@ public class BackTrackGraphV2 {
 
         // POST'S simples
         if(simple) {
-            copeWithSimplesPost(o,seq);
+            return copeWithSimplesPost(o,seq);
         }
         // POST'S compostos
         else {
-            copeWithCompoundPost(o,seq);
+            return copeWithCompoundPost(o,seq);
         }
     }
 
-    private void copeWithSimplesPost(Operation o, List<Information> seq) {
+    private List<Information> copeWithSimplesPost(Operation o, List<Information> seq) {
 
         List<Information> list = history.get(o.getOperationID());
 
@@ -401,17 +401,146 @@ public class BackTrackGraphV2 {
             int cardinality = 1;
             Information i = new Information(o, status, cardinality);
             list.add(i);
+            List<Information> toReturn = List.of(i);
+            return toReturn;
         } else {
             int index = list.size();
             Information last_info = list.get(index);
             Information i = new Information(o,status,last_info.getCardinality());
             list.add(i);
+            List<Information> toReturn = List.of(i);
+            return toReturn;
         }
     }
 
-    private void copeWithCompoundPost(Operation o, List<Information> seq) {
-        
+    private List<Information> copeWithCompoundPost(Operation o, List<Information> seq) {
+        // This one will be difficult
+        List<Information> list = history.get(o.getOperationID());
+
+        if(list.isEmpty()) {
+            // Primeira entrada de todas no algoritmo
+            // int cardinality = 1;
+            // Information i = new Information(o,status,cardinality);
+            List<Information> result = processPost(o);
+            return result;
+        } else {
+            // Precisa de logica adicional aqui sequer?
+            List<Information> result = processPost(o);
+            return result;
+        }
+
     }
+
+    private List<Information> processPost(Operation o) {
+
+        // In order to obtain (the 'arguments' ) this we will have to follow the red links in the graph
+        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+
+        List<Operation> needed = new LinkedList<>();
+        for(DefaultEdge e : edge_set) {
+            if(e instanceof TimeEdge) {
+                Operation op = btg.getEdgeTarget(e);
+                needed.add(op);
+            }
+        }
+
+        List<Information> compareTo = new LinkedList<>();
+        // Now we have the arguments needed , we obtained that from the graph
+        // We need to check if there are operations available to use
+        // In this case when we speak about availability
+        // It must exist and I isn't used in any other 'enrollment'
+        // The 'enrollment' bit is part of the things that we know
+        // about this specification
+
+        // FIRST POSSIBILITY : Both are available!
+        // LOGIC: if I can't get all the arguments needed then create
+        // all new ones, not sure if this is the best thing to do but
+
+        for(Operation op_needed : needed) {
+            Information info = getMeOne(op_needed,o);
+            if(info != null) 
+                compareTo.add(info);
+        }
+
+        // This means that there is at least one that must
+        // be created - (back tracked)
+        if(compareTo.size() != needed.size()) {
+            List<Information> backTrackList = backTrackPost(o,needed);
+            return backTrackList; // return the whole backtrack thing
+        } else {
+            // This means that all of them are available let's just use them
+            List<Information> list_root = history.get(o.getOperationID());
+            Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
+            for(Information o_needed: compareTo) {
+                i_root.addArgument(o_needed);
+            }
+            list_root.add(i_root);
+            List<Information> list = List.of(i_root);
+            return list; // just return the POST since we can use the ones available
+                        
+        }
+
+    }
+
+    /**
+     * 
+     * @param o - Given the operation get one in the
+     * history
+     * @return - the information about the operation in our
+     * history
+     */
+    private Information getMeOne(Operation o_get, Operation my_op) {
+
+        List<Information> list = history.get(o_get.getOperationID());
+
+        // We must be carefull cause we need a AVAILABLE one
+        // and one that is not being used by another enrollment
+
+        // ORDER : get me the first one that is available and not in use
+        for(Information i : list) {
+            if(i.getStatus() == Status.AVAILABLE && !i.checkUse(my_op)) {
+                return i;
+            }
+        }
+        //If we cannot get one then just return null, this might mean
+        // that there is no available one or the available ones
+        // are in use
+        return null;
+    }
+
+    private List<Information> backTrackPost(Operation root,List<Operation> needed) {
+        // We already know the operations that we have to back-track
+        // Important for the future : we probably will need the
+        // method that counts the outgoing edges to know the order
+        // of certain posts
+
+        // Let's set the cardinality of the arguments before-hand
+        // since we will know it
+        List<Information> toReturn = new LinkedList<>();
+        Stack<Information> stack = new Stack<>();
+        List<Information> list_root = history.get(root.getOperationID());
+        Information i_root = new Information(root, Status.AVAILABLE, list_root.size()+1);
+        for(Operation o : needed) {
+            Information i_father = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
+            i_root.addArgument(i_father);
+        }
+        stack.push(i_root);
+
+        // Now let's put into the stack the operations that it needs
+        for(Operation o : needed) {
+            List<Information> list_op = history.get(o.getOperationID());
+            Information i = new Information(o,Status.AVAILABLE,list_op.size()+1);
+            list_op.add(i);
+            stack.push(i);
+        }
+
+        while(!stack.isEmpty()) {
+            toReturn.add(stack.pop());
+        }
+
+        return toReturn;
+    }
+
 
 
 
