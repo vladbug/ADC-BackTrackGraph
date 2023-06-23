@@ -167,6 +167,11 @@ public class BackTrackGraphV2 {
         }
         System.out.println("------------------------------");
 
+        List<Information> returned = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        for(Information r : returned) {
+            System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+        }
+
     }
 
 
