@@ -42,6 +42,10 @@ public class Information {
         return arguments;
     }
 
+    public boolean hasTheSameArguments(List<Information> list) {
+        return !Collections.disjoint(list, arguments);
+    }
+
     public Operation getOperation() {
         return operation;
     }

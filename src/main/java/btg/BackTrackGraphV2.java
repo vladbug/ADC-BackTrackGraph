@@ -1,6 +1,7 @@
 package btg;
 
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -86,6 +87,24 @@ public class BackTrackGraphV2 {
      */
     private List<Operation> tombstone;
 
+    /**
+     * DEPRICATED
+     * This data structure will be responsible to manage 
+     * the compound posts. They are very tricky to handle
+     * In here we only have one compound post but there 
+     * might be more.
+     * 
+     * key : operationID
+     * value : List<Argument> which are just a combinatorial calculus
+     */
+    //private Map<String, 
+
+    /**
+     * This datastructure will be responsible to store all the possible combinations
+     * and associate a boolean to it in order to know if we can use it or no.
+     */
+    private Map<String,List<Pair>> compoundData; // i dont like this , cause the backtrack will have a complex logic with it
+
 
 
     // This will map , postTournamente$1 into the returnalInformation of the same
@@ -104,6 +123,7 @@ public class BackTrackGraphV2 {
         operationVerbs = new HashMap<>(100);
         history = new HashMap<>(100);
         tombstone = new LinkedList<>();
+        compoundData = new HashMap<>(100);
 
         // And now for each one we will the create the map within itself
         // Maybe not now and do it somewhere in front of the code
@@ -384,7 +404,7 @@ public class BackTrackGraphV2 {
         if(simple) {
             return copeWithSimplesPost(o,seq);
         }
-        // POST'S compostos
+        // POST'S compostos -> usam outros POSTs para a sua existencia
         else {
             return copeWithCompoundPost(o,seq);
         }
@@ -414,6 +434,7 @@ public class BackTrackGraphV2 {
     }
 
     private List<Information> copeWithCompoundPost(Operation o, List<Information> seq) {
+
         // This one will be difficult
         List<Information> list = history.get(o.getOperationID());
 
@@ -431,7 +452,96 @@ public class BackTrackGraphV2 {
 
     }
 
+    private List<Information> getValidArguments(Operation o) {
+        // We are getting the operations needed for this execution to proceed
+        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+
+        List<Operation> needed = new LinkedList<>();
+        for(DefaultEdge e : edge_set) {
+            if(e instanceof TimeEdge) {
+                Operation op = btg.getEdgeTarget(e);
+                needed.add(op);
+            }
+        }
+        
+
+        // Now by having them let's run our new method that creates the combinatory for use
+        List<Information> possibility = getPossibility(needed,o);
+
+        // This should return already a possibility that we want!
+       return possibility;
+    }
+
+    private List<Information> getPossibility(List<Operation> needed,Operation o) {
+        // We cannot assume that it's just two for loops inside one another
+        // We must be generic ! There might be 3 , 4 or even 5 enchanced loops
+
+        List<List<Information>> generated_possibilities = new LinkedList<>();
+        for(Operation n : needed) {
+            List<Information> info = history.get(n.getOperationID());
+            generated_possibilities.add(info);
+        }
+
+        List<List<Information>> result = generateCombinations(generated_possibilities);
+
+        // Since we are selecting all of them now we need to extra check if they all are available
+        // Em principio nunca estarao aqui unavailable porque eu mandarei eles pra tomb stone
+        // Portanto vamos ignorar este passo
+
+        // Given the combinatory let's check if there isn't already an enrollment with
+        // that combination 
+        List<Information> my_list = history.get(o.getOperationID());
+
+        for(List<Information> list : result) {
+            int counter = 0;
+            for(Information i : my_list) {
+
+                if(!i.hasTheSameArguments(list)) {
+                    counter++;
+                }
+            }
+            if(counter == my_list.size()) {
+                // This means the combination is applicable, is a valid one to use
+                return list;
+            }
+        }
+
+        return null;
+    }
+
+    // CHATGPT
+   public static List<List<Information>> generateCombinations(List<List<Information>> lists) {
+        List<List<Information>> combinations = new ArrayList<>();
+        int[] indices = new int[lists.size()];
+
+        while (true) {
+            List<Information> combination = new ArrayList<>();
+            for (int i = 0; i < lists.size(); i++) {
+                List<Information> currentList = lists.get(i);
+                int currentIndex = indices[i];
+                combination.add(currentList.get(currentIndex));
+            }
+            combinations.add(combination);
+
+            int listIndex = lists.size() - 1;
+            while (listIndex >= 0 && indices[listIndex] == lists.get(listIndex).size() - 1) {
+                indices[listIndex] = 0;
+                listIndex--;
+            }
+
+            if (listIndex < 0) {
+                break;
+            }
+
+            indices[listIndex]++;
+        }
+
+        return combinations;
+    }
+
     private List<Information> processPost(Operation o) {
+
+        // What if we already have access to the ones we need with an additional data stucture?
 
         // In order to obtain (the 'arguments' ) this we will have to follow the red links in the graph
         Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
@@ -455,11 +565,13 @@ public class BackTrackGraphV2 {
         // FIRST POSSIBILITY : Both are available!
         // LOGIC: if I can't get all the arguments needed then create
         // all new ones, not sure if this is the best thing to do but
-
-        for(Operation op_needed : needed) {
-            Information info = getMeOne(op_needed,o);
-            if(info != null) 
-                compareTo.add(info);
+        boolean found = false;
+        while(!found) {
+            for(Operation op_needed : needed) {
+                Information info = getMeOne(op_needed,o);
+                if(info != null) 
+                    compareTo.add(info);
+            }
         }
 
         // This means that there is at least one that must
@@ -468,6 +580,14 @@ public class BackTrackGraphV2 {
             List<Information> backTrackList = backTrackPost(o,needed);
             return backTrackList; // return the whole backtrack thing
         } else {
+
+            // Here we will have to check if there isn't an enrollment with 
+            // these available arguments in use already
+            // (this is an expensive operation :/, try to find a better way)
+            List<Information> listToCheck = history.get(o.getOperationID());
+
+            
+
             // This means that all of them are available let's just use them
             List<Information> list_root = history.get(o.getOperationID());
             Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
@@ -498,7 +618,10 @@ public class BackTrackGraphV2 {
 
         // ORDER : get me the first one that is available and not in use
         for(Information i : list) {
-            if(i.getStatus() == Status.AVAILABLE && !i.checkUse(my_op)) {
+            if(i.getStatus() == Status.AVAILABLE && !i.checkUse(my_op)) { // this must have a different logic
+                // !! this probably won't work
+                // we need a more refined way to discover the checkUse
+                // !! use addChildren method
                 return i;
             }
         }
