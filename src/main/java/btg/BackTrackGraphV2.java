@@ -150,27 +150,168 @@ public class BackTrackGraphV2 {
         createRequiresConnections();
         inferLinks_v3();
        
-        
-       
-        System.out.println("This is a new test sequence!");
-        List<ReturnInfo> response = aa(30);
-        System.out.println("And these are my arguments: ");
-        for(ReturnInfo s : response) {
-            System.out.println("------------------------------");
-            System.out.println(s.getOperation().getOperationID() + " " + "$"+s.getOperationCardinality());
-            Map<Operation,Integer> map = s.getCardinalities();
-            System.out.println("These are the arguments for: " + s.getOperation().getOperationID());
-            map.forEach((key,value) ->  {
-                System.out.println(key.getOperationID() + " " + "$"+value);
-            });
-            System.out.println("------------------------------");
-        }
-        System.out.println("------------------------------");
+        // System.out.println("This is a new test sequence!");
+        // List<ReturnInfo> response = aa(30);
+        // System.out.println("And these are my arguments: ");
+        // for(ReturnInfo s : response) {
+        //     System.out.println("------------------------------");
+        //     System.out.println(s.getOperation().getOperationID() + " " + "$"+s.getOperationCardinality());
+        //     Map<Operation,Integer> map = s.getCardinalities();
+        //     System.out.println("These are the arguments for: " + s.getOperation().getOperationID());
+        //     map.forEach((key,value) ->  {
+        //         System.out.println(key.getOperationID() + " " + "$"+value);
+        //     });
+        //     System.out.println("------------------------------");
+        // }
+        // System.out.println("------------------------------");
 
         List<Information> returned = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        List<Information> returned2 = resolve(operationIDS.get("postTournament"), new LinkedList<>());
+        // List<Information> returned11 = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        // List<Information> returned22 = resolve(operationIDS.get("postTournament"), new LinkedList<>());
+        // List<Information> returned33 = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        List<Information> returned3 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 1 1
+        List<Information> returned31 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 2 2
+        List<Information> returned32 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 1 2
+        List<Information> returned33 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 2 1
+        List<Information> returned44 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 1 3 -> 2 2
+        //List<Information> returned55 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
+        // List<Information> returned66 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
+     
         for(Information r : returned) {
             System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
         }
+
+        for(Information r : returned2) {
+            System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+        }
+
+        // for(Information r : returned11) {
+        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+        // }
+
+        // for(Information r : returned22) {
+        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+        // }
+
+        // for(Information r : returned33) {
+        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+        // }
+
+        for(Information r : returned3) {
+            System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+            List<Information> args = r.getArguments();
+            
+            if(args.size() > 0) {
+                System.out.println("Arguments: ");
+                for(Information arg_i : args) {
+                    System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
+                }
+            } else {
+                System.out.println("No arguments");
+            }
+            
+        }
+
+        for(Information r : returned31) {
+            System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+           
+            List<Information> args = r.getArguments();
+            if(args.size() > 0) {
+                System.out.println("Arguments: ");
+                for(Information arg_i : args) {
+                    System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
+                }
+            } else {
+                System.out.println("No arguments");
+            }
+            
+        }
+
+        for(Information r : returned32) {
+            System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+           
+            List<Information> args = r.getArguments();
+            if(args.size() > 0) {
+                System.out.println("Arguments: ");
+                for(Information arg_i : args) {
+                    System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
+                }
+            } else {
+                System.out.println("No arguments");
+            }
+            
+        }
+
+        for(Information r : returned33) {
+            System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+           
+            List<Information> args = r.getArguments();
+            if(args.size() > 0) {
+                System.out.println("Arguments: ");
+                for(Information arg_i : args) {
+                    System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
+                }
+            } else {
+                System.out.println("No arguments");
+            }
+            
+        }
+
+        // for(Information r : returned44) {
+        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+           
+        //     List<Information> args = r.getArguments();
+        //     if(args.size() > 0) {
+        //         System.out.println("Arguments: ");
+        //         for(Information arg_i : args) {
+        //             System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
+        //         }
+        //     } else {
+        //         System.out.println("No arguments");
+        //     }
+            
+        // }
+
+        List<Information> aaaa = history.get("postPlayer");
+        for(Information iii : aaaa) {
+            System.out.println(iii.getOperation().getOperationID() + iii.getCardinality());
+        }
+
+        List<Information> aaaa2 = history.get("postTournament");
+        for(Information iii : aaaa2) {
+            System.out.println(iii.getOperation().getOperationID() + iii.getCardinality());
+        }
+
+        // for(Information r : returned55) {
+        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+           
+        //     List<Information> args = r.getArguments();
+        //     if(args.size() > 0) {
+        //         System.out.println("Arguments: ");
+        //         for(Information arg_i : args) {
+        //             System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
+        //         }
+        //     } else {
+        //         System.out.println("No arguments");
+        //     }
+            
+        // }
+
+        // for(Information r : returned66) {
+        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
+           
+        //     List<Information> args = r.getArguments();
+        //     if(args.size() > 0) {
+        //         System.out.println("Arguments: ");
+        //         for(Information arg_i : args) {
+        //             System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
+        //         }
+        //     } else {
+        //         System.out.println("No arguments");
+        //     }
+            
+        // }
 
     }
 
@@ -420,15 +561,17 @@ public class BackTrackGraphV2 {
 
         if(list.isEmpty()) {
             // Primeira entrada de todas no algortimo
+            System.out.println("Is empty");
             int cardinality = 1;
             Information i = new Information(o, status, cardinality);
             list.add(i);
             List<Information> toReturn = List.of(i);
             return toReturn;
         } else {
+            System.out.println("Isn't empty");
             int index = list.size();
-            Information last_info = list.get(index);
-            Information i = new Information(o,status,last_info.getCardinality());
+            Information last_info = list.get(index-1);
+            Information i = new Information(o,status,last_info.getCardinality()+1);
             list.add(i);
             List<Information> toReturn = List.of(i);
             return toReturn;
@@ -448,7 +591,6 @@ public class BackTrackGraphV2 {
             // Let's get it's arguments, and in here we might have 2 scenarios
             // where we have the arguments and where we don't and need to backtrack
             List<Information> result = getValidArguments(o);
-
             if(result != null) {
                 // Re-using existent ones
                 for(Information info : result) {
@@ -470,7 +612,7 @@ public class BackTrackGraphV2 {
                         needed.add(op);
                     }
                 }
-
+                System.out.println("I am backtracking");
                 List<Information> backtracked = backTrackPost(o, needed);
                 for(Information info_update : backtracked) {
                     List<Information> info_op = history.get(info_update.getOperation().getOperationID());
@@ -481,13 +623,19 @@ public class BackTrackGraphV2 {
 
        
         } else {
+
             int index = list.size();
-            Information last_info = list.get(index);
-            Information i = new Information(o,Status.AVAILABLE,last_info.getCardinality());
+            Information last_info = list.get(index-1);
+            Information i = new Information(o,Status.AVAILABLE,last_info.getCardinality()+1);
 
             List<Information> result = getValidArguments(o);
-
+            
             if(result != null) {
+
+                System.out.println("Valid arguments: ");
+                for(Information i3 : result) {
+                    System.out.println(i3.getOperation().getOperationID() + i3.getCardinality());
+                }
                 // Re-using existent ones
                 for(Information info : result) {
                     i.addArgument(info);
@@ -509,6 +657,7 @@ public class BackTrackGraphV2 {
                     }
                 }
 
+                System.out.println("I am backtracking");
                 List<Information> backtracked = backTrackPost(o, needed);
                 for(Information info_update : backtracked) {
                     List<Information> info_op = history.get(info_update.getOperation().getOperationID());
@@ -535,7 +684,7 @@ public class BackTrackGraphV2 {
 
         // Now by having them let's run our new method that creates the combinatory for use
         List<Information> possibility = getPossibility(needed,o);
-
+        //System.out.println(possibility.size());
         // This should return already a possibility that we want!
        return possibility;
     }
@@ -552,6 +701,7 @@ public class BackTrackGraphV2 {
 
         List<List<Information>> result = generateCombinations(generated_possibilities);
 
+
         // Since we are selecting all of them now we need to extra check if they all are available
         // Em principio nunca estarao aqui unavailable porque eu mandarei eles pra tomb stone
         // Portanto vamos ignorar este passo
@@ -560,19 +710,43 @@ public class BackTrackGraphV2 {
         // that combination 
         List<Information> my_list = history.get(o.getOperationID());
 
+        System.out.println("A imprimir antes de verificar cenas");
+        for(Information ia : my_list) {
+            System.out.println(ia.getCardinality() + ia.getOperation().getOperationID());
+            System.out.println("ARGS");
+            List<Information> lol = ia.getArguments();
+            for(Information a : lol ) {
+                System.out.println(a.getOperation().getOperationID() + a.getCardinality());
+            }
+        }
+
+        System.out.println("Combinatoria");
+        for(List<Information> a : result) {
+            for(Information i : a) {
+                System.out.println(i.getOperation().getOperationID() + i.getCardinality());
+            }
+        }
+
         for(List<Information> list : result) {
             int counter = 0;
             for(Information i : my_list) {
-
+                System.out.println(i.getArguments().equals(list));
                 if(!i.hasTheSameArguments(list)) {
                     counter++;
-                }
+                }   
             }
+            System.out.println("---");
+            System.out.println(counter);
+            System.out.println("---");
+            
             if(counter == my_list.size()) {
                 // This means the combination is applicable, is a valid one to use
+                System.out.println(list);
                 return list;
             }
         }
+
+
 
         return null;
     }
@@ -628,8 +802,17 @@ public class BackTrackGraphV2 {
         // Now let's put into the stack the operations that it needs
         for(Operation o : needed) {
             List<Information> list_op = history.get(o.getOperationID());
+            for(Information test : list_op) {
+                System.out.println("Before...");
+                System.out.println(test.getOperation().getOperationID() + test.getCardinality());
+            }
             Information i = new Information(o,Status.AVAILABLE,list_op.size()+1);
-            list_op.add(i);
+            
+           
+            for(Information test : list_op) {
+                System.out.println("After...");
+                System.out.println(test.getOperation().getOperationID() + test.getCardinality());
+            }
             stack.push(i);
         }
 

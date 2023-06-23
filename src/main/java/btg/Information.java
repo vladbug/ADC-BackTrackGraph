@@ -43,7 +43,7 @@ public class Information {
     }
 
     public boolean hasTheSameArguments(List<Information> list) {
-        return !Collections.disjoint(list, arguments);
+        return arguments.equals(list);
     }
 
     public Operation getOperation() {

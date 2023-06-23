@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 import btg.BackTrackGraph;
+import btg.BackTrackGraphV2;
 
 public class Main {
 
@@ -20,8 +21,8 @@ public class Main {
         
         // Creating standard operation dependency graph
         //OperationDependencyGraph odg = new OperationDependencyGraph(spec.getOperations());
-        BackTrackGraph btg = new BackTrackGraph(spec.getOperations());
-        btg.iterateAllEdges();
+        BackTrackGraphV2 btg = new BackTrackGraphV2(spec.getOperations());
+        //btg.iterateAllEdges();
         //btg.inferAllLinks();
         
         // // Generating all topological sorts used for nominal test cases
