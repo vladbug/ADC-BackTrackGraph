@@ -730,6 +730,8 @@ public class BackTrackGraphV2 {
         for(List<Information> list : result) {
             int counter = 0;
             for(Information i : my_list) {
+                System.out.println(i.getArguments());
+                System.out.println(list);
                 System.out.println(i.getArguments().equals(list));
                 if(!i.hasTheSameArguments(list)) {
                     counter++;

@@ -58,6 +58,19 @@ public class Information {
         return cardinality;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        
+        Information other = (Information) o;
+
+        if(this.operation.getOperationID().equals(other.operation.getOperationID()) &&
+        this.cardinality == other.cardinality && this.status == other.status) {
+            return true;
+        }
+
+        return false;
+    }
+
     
     
 }
