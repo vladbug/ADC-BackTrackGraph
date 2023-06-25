@@ -22,7 +22,7 @@ public class Main {
         // Creating standard operation dependency graph
         //OperationDependencyGraph odg = new OperationDependencyGraph(spec.getOperations());
         BackTrackGraphV2 btg = new BackTrackGraphV2(spec.getOperations());
-        //btg.iterateAllEdges();
+        btg.iterateAllEdges();
         //btg.inferAllLinks();
         
         // // Generating all topological sorts used for nominal test cases

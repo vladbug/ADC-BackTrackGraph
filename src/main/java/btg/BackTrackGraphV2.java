@@ -149,170 +149,10 @@ public class BackTrackGraphV2 {
     
         createRequiresConnections();
         inferLinks_v3();
+
+        //parseEnsures(operationIDS.get("postPlayer").getEnsures());
+        //System.out.println(operationsRequires.get(operationIDS.get("postPlayer")));
        
-        // System.out.println("This is a new test sequence!");
-        // List<ReturnInfo> response = aa(30);
-        // System.out.println("And these are my arguments: ");
-        // for(ReturnInfo s : response) {
-        //     System.out.println("------------------------------");
-        //     System.out.println(s.getOperation().getOperationID() + " " + "$"+s.getOperationCardinality());
-        //     Map<Operation,Integer> map = s.getCardinalities();
-        //     System.out.println("These are the arguments for: " + s.getOperation().getOperationID());
-        //     map.forEach((key,value) ->  {
-        //         System.out.println(key.getOperationID() + " " + "$"+value);
-        //     });
-        //     System.out.println("------------------------------");
-        // }
-        // System.out.println("------------------------------");
-
-        List<Information> returned = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        // List<Information> returned2 = resolve(operationIDS.get("postTournament"), new LinkedList<>());
-        // List<Information> returned11 = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        // List<Information> returned22 = resolve(operationIDS.get("postTournament"), new LinkedList<>());
-        // List<Information> returned33 = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        List<Information> returned3 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 1 1
-        List<Information> returned31 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 2 2
-        // List<Information> returned32 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 1 2
-        // List<Information> returned33 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 2 1
-        // List<Information> returned44 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>()); // 1 3 -> 2 2
-        // List<Information> returned55 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
-        // List<Information> returned66 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
-     
-        // for(Information r : returned) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-        // }
-
-        // for(Information r : returned2) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-        // }
-
-        // for(Information r : returned11) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-        // }
-
-        // for(Information r : returned22) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-        // }
-
-        // for(Information r : returned33) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-        // }
-
-        for(Information r : returned3) {
-            System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-            List<Information> args = r.getArguments();
-            
-            if(args.size() > 0) {
-                System.out.println("Arguments: ");
-                for(Information arg_i : args) {
-                    System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
-                }
-            } else {
-                System.out.println("No arguments");
-            }
-            
-        }
-
-        for(Information r : returned31) {
-            System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-           
-            List<Information> args = r.getArguments();
-            if(args.size() > 0) {
-                System.out.println("Arguments: ");
-                for(Information arg_i : args) {
-                    System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
-                }
-            } else {
-                System.out.println("No arguments");
-            }
-            
-        }
-
-        // for(Information r : returned32) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-           
-        //     List<Information> args = r.getArguments();
-        //     if(args.size() > 0) {
-        //         System.out.println("Arguments: ");
-        //         for(Information arg_i : args) {
-        //             System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
-        //         }
-        //     } else {
-        //         System.out.println("No arguments");
-        //     }
-            
-        // }
-
-        // for(Information r : returned33) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-           
-        //     List<Information> args = r.getArguments();
-        //     if(args.size() > 0) {
-        //         System.out.println("Arguments: ");
-        //         for(Information arg_i : args) {
-        //             System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
-        //         }
-        //     } else {
-        //         System.out.println("No arguments");
-        //     }
-            
-        // }
-
-        // for(Information r : returned44) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-           
-        //     List<Information> args = r.getArguments();
-        //     if(args.size() > 0) {
-        //         System.out.println("Arguments: ");
-        //         for(Information arg_i : args) {
-        //             System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
-        //         }
-        //     } else {
-        //         System.out.println("No arguments");
-        //     }
-            
-        // }
-
-        // List<Information> aaaa = history.get("postPlayer");
-        // for(Information iii : aaaa) {
-        //     System.out.println(iii.getOperation().getOperationID() + iii.getCardinality());
-        // }
-
-        // List<Information> aaaa2 = history.get("postTournament");
-        // for(Information iii : aaaa2) {
-        //     System.out.println(iii.getOperation().getOperationID() + iii.getCardinality());
-        // }
-
-        // for(Information r : returned55) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-           
-        //     List<Information> args = r.getArguments();
-        //     if(args.size() > 0) {
-        //         System.out.println("Arguments: ");
-        //         for(Information arg_i : args) {
-        //             System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
-        //         }
-        //     } else {
-        //         System.out.println("No arguments");
-        //     }
-            
-        // }
-
-        // for(Information r : returned66) {
-        //     System.out.println(r.getOperation().getOperationID() + r.getStatus() + r.getCardinality());
-           
-        //     List<Information> args = r.getArguments();
-        //     if(args.size() > 0) {
-        //         System.out.println("Arguments: ");
-        //         for(Information arg_i : args) {
-        //             System.out.println(arg_i.getOperation().getOperationID() + arg_i.getCardinality());
-        //         }
-        //     } else {
-        //         System.out.println("No arguments");
-        //     }
-            
-        // }
-
     }
 
 
@@ -336,17 +176,17 @@ public class BackTrackGraphV2 {
         for(Operation o : s) {
             List<String> requires_list = o.getRequires();
             RequestBodySchema aaa = o.getRequestBody();
-            System.out.println("I am this operation " + o.getOperationID() + " "  + "and these are my requestBody parameters: ");
+            //System.out.println("I am this operation " + o.getOperationID() + " "  + "and these are my requestBody parameters: ");
             if(aaa != null) {
                 Schema esquima = null;
                 //esquima = spec.dereferenceSchema((ReferencedBodySchema) o.getRequestBody());
                 esquima = spec.dereferenceSchema(((ReferencedBodySchema) o.getRequestBody()).getName()); 
                 
-                System.out.println("Name : " +  esquima.getName() + " Type: " + esquima.getType());
+                //System.out.println("Name : " +  esquima.getName() + " Type: " + esquima.getType());
                 
             }
 
-            System.out.println("------------------------------");
+            //System.out.println("------------------------------");
            
             // if(esquima != null) {
             //     System.out.println("Name: " + esquima.getName() + " Type" + esquima.getType());
@@ -361,7 +201,7 @@ public class BackTrackGraphV2 {
                     // we need to change the way that the pre-conditions with the request_body word
                     // GET /players/request_body(this){playerNIF}
                     String[] remove_request_body = pre.split("request_body\\(this\\)");
-                    // GET /players/{playerNIF}
+                    // (GET /players/{playerNIF})
                     String new_pre = remove_request_body[0] + remove_request_body[1];
                     //Check if it is a self-getter or no! In this scenario it is always the
                     // post of something so we want to know if there is already a post of that
@@ -413,7 +253,7 @@ public class BackTrackGraphV2 {
         for(Operation o : set) {
             //System.out.println("This is the operation in question " + o.getOperationID());
             Set<DefaultEdge> edge_set = btg.incomingEdgesOf(o);
-            System.out.println("I am: " + o.getOperationID());
+            //System.out.println("I am: " + o.getOperationID());
             for(DefaultEdge e : edge_set) {
                 // getPlayer : o
                 // a -> getPlayer
@@ -425,7 +265,7 @@ public class BackTrackGraphV2 {
                 }
 
                 if(e instanceof RequiresEdge) {
-                    System.out.println("I am adding a link with" + btg.getEdgeSource(e).getOperationID());
+                    //System.out.println("I am adding a link with" + btg.getEdgeSource(e).getOperationID());
                     operationsForTime.add(btg.getEdgeSource(e));
                 }
                 
@@ -436,10 +276,31 @@ public class BackTrackGraphV2 {
                 btg.addEdge(o,o_add, new LinkEdge());
                 //btg.addEdge(o,o_add, new TimeEdge());
                 //Porque é um grafo com apenas arcos singulares para o mesmo node
-                System.out.println(btg.addEdge(o,o_add, new TimeEdge())); // we won't use this
+                //System.out.println(btg.addEdge(o,o_add, new TimeEdge())); // we won't use this
                 for(Operation o_connect : operationsForTime) {
-                    btg.addEdge(o_connect, o_add, new TimeEdge());
+                    List<String> ensures_list = parseEnsures(o_add.getEnsures());
+
+                    String url = o_connect.getUrl();
+                    System.out.println("URL:" + url);
+                    for(String e : ensures_list) {
+                        // scuffed way
+                        String without_get = e.substring(5);
+                        String even_more_scuffed = without_get.replaceAll("\\)", "").trim();
+                        System.out.println(even_more_scuffed);
+                        System.out.println(e);
+                        System.out.println(e.contains(url));
+                        System.out.println(url.contains(even_more_scuffed));
+                        if(even_more_scuffed.equals(url)) { // É ISTO
+                             btg.addEdge(o_connect, o_add, new TimeEdge());
+                        }
+                    }
+
+                    //btg.addEdge(o_connect, o_add, new TimeEdge());
                     System.out.println("This is the edge that I added: " + o_connect.getOperationID() + " ---> " + o_add.getOperationID());
+                    
+                    if(o_connect.getVerb().equals("POST")) {
+                        btg.addEdge(o_add,o_connect,new YellowEdge());
+                    }
                     
                 }
             }
@@ -472,6 +333,11 @@ public class BackTrackGraphV2 {
 
             else if(e instanceof TimeEdge) {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am timed edged");
+            }
+
+            else if(e instanceof YellowEdge) {
+                System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am yellow edged");
+
             }
             else {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am a requires edge");
@@ -513,7 +379,7 @@ public class BackTrackGraphV2 {
             break;
 
             case "DELETE":
-            //copeWithDelete();
+            sequence = copeWithDelete(o,toReturn);
             break;
 
             case "GET":
@@ -531,6 +397,119 @@ public class BackTrackGraphV2 {
 
         return sequence;
     }
+
+    private List<Information> copeWithDelete(Operation o, List<Information> seq) {
+
+        // Most basic deletion : a simple delete
+        // requirements : we have the resource and it is a simple post so we just delete it
+        // update the data structure AND if there are compound posts envollved with it
+        // we will need an additional logic!
+
+        // We create a deletion but we need to back track
+        // because what we are deleting does not exist
+
+
+
+        
+        return null;
+    }
+
+    private List<Information> depends(Information i) {
+        // deleteP $2 - operation in question
+        // Let's see if we have uses
+        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(i.getOperation());
+
+        Set<Operation> op_dependecy = new HashSet<>();
+
+        for(DefaultEdge e : edge_set) {
+            if(e instanceof YellowEdge) {
+                Operation op = btg.getEdgeTarget(e);
+                
+                op_dependecy.add(op);
+            }
+        }
+
+        if(op_dependecy.size() == 0) {
+            // This is a POST with no out yellow edges, it won't trigger a cascade deletion
+            // In this specific example it means that this POST is a POST Enrollment
+
+            // Here we just wan't a random enrollment that exists
+            // and delete it!
+            List<Information> history_list = history.get(i.getOperation().getOperationID()); // wrong, because we are searching for deleteE and it is not in history
+            Information toDelete = null;
+            // Get the first available POST for deletion
+            for(Information info : history_list) {
+                if(i.getStatus() == Status.AVAILABLE) {
+                    toDelete = info;
+                }
+            }
+
+            if(toDelete == null) {
+                // This mean that there is no available operation to do that
+                // or simply the history_list is empty, this means
+                // that we will have to backtrack! We must
+                // create an enrollment in order to delete it
+                Set<DefaultEdge> edge_set_for_delete = btg.outgoingEdgesOf(i.getOperation());
+
+                List<Operation> needed = new LinkedList<>();
+                for(DefaultEdge e : edge_set_for_delete) {
+                    if(e instanceof TimeEdge) {
+                        Operation op = btg.getEdgeTarget(e);
+                        needed.add(op);
+                    }
+                }
+
+                backTrackDelete(i.getOperation(),needed);
+            } else {
+                // This means that there is an available one
+                // we do not need to backtrack
+                //Information deleteFather = getRandomForDeletion()
+                //Information toReturn = new Information(i.getOperation(), Status.UNAVAILABLE, )
+            }
+            
+        } else {
+            // This means that this POST might create a cascade deletion
+            // checkForUses()
+            // if has uses delete them
+            // delete itself
+
+        }
+        return null;
+    }
+
+    private List<Information> backTrackDelete(Operation root,List<Operation> needed) {
+        // We already know the operations that we have to back-track
+        // Important for the future : we probably will need the
+        // method that counts the outgoing edges to know the order
+        // of certain posts
+
+        // Let's set the cardinality of the arguments before-hand
+        // since we will know it
+        List<Information> toReturn = new LinkedList<>();
+        Stack<Information> stack = new Stack<>();
+        List<Information> list_root = history.get(root.getOperationID());
+        Information i_root = new Information(root, Status.AVAILABLE, list_root.size()+1);
+        for(Operation o : needed) {
+            Information i_father = new Information(o,Status.UNAVAILABLE,history.get(o.getOperationID()).size()+1);
+            i_root.addArgument(i_father);
+        }
+        stack.push(i_root);
+
+        // Now let's put into the stack the operations that it needs
+        for(Operation o : needed) {
+            List<Information> list_op = history.get(o.getOperationID());
+            Information i = new Information(o,Status.UNAVAILABLE,list_op.size()+1);
+            stack.push(i);
+        }
+
+        while(!stack.isEmpty()) {
+            toReturn.add(stack.pop());
+        }
+
+        return toReturn;
+    }
+
+
 
     private List<Information> copeWithPost(Operation o, List<Information> seq) {
 
@@ -816,17 +795,7 @@ public class BackTrackGraphV2 {
         // Now let's put into the stack the operations that it needs
         for(Operation o : needed) {
             List<Information> list_op = history.get(o.getOperationID());
-            for(Information test : list_op) {
-                System.out.println("Before...");
-                System.out.println(test.getOperation().getOperationID() + test.getCardinality());
-            }
             Information i = new Information(o,Status.AVAILABLE,list_op.size()+1);
-            
-           
-            for(Information test : list_op) {
-                System.out.println("After...");
-                System.out.println(test.getOperation().getOperationID() + test.getCardinality());
-            }
             stack.push(i);
         }
 
@@ -1288,6 +1257,32 @@ public class BackTrackGraphV2 {
             }
         }
        return parsed_requires;
+    }
+
+    private List<String> parseEnsures(List<String> ensures) {
+        List<String> parsed_ensures = new LinkedList<>();
+        // [response_code(GET /players/request_body(this){playerNIF}) == 200]
+        for(String s : ensures) {
+            if(s.contains("GET")) {
+                String sub_string = s.substring(13); // magic number
+                
+                // I want to remove the information in the String until ==
+                String[] raw = sub_string.split("==");
+                String[] remove_request_body = raw[0].split("request_body\\(this\\)");
+                String new_pre = remove_request_body[0] + remove_request_body[1];
+                parsed_ensures.add(new_pre);
+            }
+        }
+        //String[] remove_request_body = parsed_ensures.get(0).split("request_body\\(this\\)");
+        //String new_pre = remove_request_body[0] + remove_request_body[1];
+        //System.out.println(new_pre);
+        return parsed_ensures;
+    }
+
+    private String remove_request_body(List<String> string) {
+        String[] remove_request_body = string.get(0).split("request_body\\(this\\)");
+        String new_pre = remove_request_body[0] + remove_request_body[1];
+        return new_pre;
     }
 
 
