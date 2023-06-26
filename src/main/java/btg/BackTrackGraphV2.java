@@ -149,7 +149,7 @@ public class BackTrackGraphV2 {
     
         createRequiresConnections();
         inferLinks_v3();
-
+        applyTransitiveFilter();
         //parseEnsures(operationIDS.get("postPlayer").getEnsures());
         //System.out.println(operationsRequires.get(operationIDS.get("postPlayer")));
        
@@ -278,24 +278,7 @@ public class BackTrackGraphV2 {
                 //Porque é um grafo com apenas arcos singulares para o mesmo node
                 //System.out.println(btg.addEdge(o,o_add, new TimeEdge())); // we won't use this
                 for(Operation o_connect : operationsForTime) {
-                    List<String> ensures_list = parseEnsures(o_add.getEnsures());
-
-                    String url = o_connect.getUrl();
-                    System.out.println("URL:" + url);
-                    for(String e : ensures_list) {
-                        // scuffed way
-                        String without_get = e.substring(5);
-                        String even_more_scuffed = without_get.replaceAll("\\)", "").trim();
-                        System.out.println(even_more_scuffed);
-                        System.out.println(e);
-                        System.out.println(e.contains(url));
-                        System.out.println(url.contains(even_more_scuffed));
-                        if(even_more_scuffed.equals(url)) { // É ISTO
-                             btg.addEdge(o_connect, o_add, new TimeEdge());
-                        }
-                    }
-
-                    //btg.addEdge(o_connect, o_add, new TimeEdge());
+                    btg.addEdge(o_connect, o_add, new TimeEdge());
                     System.out.println("This is the edge that I added: " + o_connect.getOperationID() + " ---> " + o_add.getOperationID());
                     
                     if(o_connect.getVerb().equals("POST")) {
@@ -310,6 +293,98 @@ public class BackTrackGraphV2 {
             operationsToAdd = new HashSet<>();
                
         }
+    }
+
+    private void applyTransitiveFilter() {
+        Set<Operation> s = btg.vertexSet();
+
+        for(Operation o : s) {
+            System.out.println("Operation in question: " + o.getOperationID());
+            // This will be performed for EVERY operation in our graph
+            // We wan't to get the red links of each one of them
+            Set<DefaultEdge> red_edges = new HashSet<>();
+            Set<String> red_edges_operations = new HashSet<>();
+            Set<DefaultEdge> edges = btg.outgoingEdgesOf(o);
+
+            // Now we are only interesested in the red links
+            for(DefaultEdge e : edges) {
+                if(e instanceof TimeEdge || e instanceof LinkEdge) {
+                    red_edges.add(e);
+                    red_edges_operations.add(btg.getEdgeTarget(e).getOperationID());
+                }
+            }
+
+            if(red_edges_operations.size() > 1) {
+
+            
+
+            // Now let's apply the transitivity rule for it
+            List<Set<String>> sets = new LinkedList<>();
+            Set<String> beginner_set = new HashSet<>();
+            // Let's fill the beginner_set
+            for(String o_red : red_edges_operations) {
+                beginner_set.add(o_red);
+            }
+            sets.add(beginner_set);
+
+            // All ok in here
+
+            // Now let's check if we can traverse the edges
+            for(String o_red : red_edges_operations) {
+                
+                Set<DefaultEdge> out_destination = btg.outgoingEdgesOf(operationIDS.get(o_red));
+             
+                // Out of these out_destionation edges we only want the red ones
+                // Let's see if it leads to another POSTs
+                Set<String> potencial_set = new HashSet<>();
+
+                for(DefaultEdge e_dest : out_destination) {
+                    if(e_dest instanceof TimeEdge) {
+                        
+                        potencial_set.add(btg.getEdgeTarget(e_dest).getOperationID());
+                    }
+                }
+
+                sets.add(potencial_set);
+            }
+
+            for(Set<String> ss : sets) {
+                System.out.println("This is one of the sets");
+                for(String o_set : ss) {
+                    System.out.println(o_set);
+                }
+                System.out.println("Finished printing the set in question");
+            }
+
+            Set<String> different_elements = my_method(sets);
+            System.out.println(different_elements);
+            System.out.println("I got here");
+            for(String o_diff : different_elements) {
+                System.out.println("I did not get here");
+                System.out.println(o_diff);
+            }
+
+        }
+
+
+        }
+
+    }
+
+    // This will retrieve the edges that we have to break
+    private Set<String> my_method(List<Set<String>> sets) {
+        Set<String> initial_set = sets.get(0);
+        Set<String> return_set = initial_set;
+
+        for(int i = 1; i < sets.size(); i++) {
+            Set<String> s = sets.get(i);
+            if(!s.isEmpty()) {
+                return_set.retainAll(s);
+            }
+        }
+
+        return return_set;
+
     }
 
     public void iterateAllEdges() {
