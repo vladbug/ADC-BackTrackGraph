@@ -42,6 +42,10 @@ public class Information {
         return arguments;
     }
 
+    public boolean hasArguments() {
+        return arguments.size() > 0;
+    }
+
     public boolean hasTheSameArguments(List<Information> list) {
         return arguments.equals(list);
     }
@@ -52,6 +56,10 @@ public class Information {
 
     public Status getStatus() {
         return status;
+    }
+
+    public void setStatus(Status new_s) {
+        status = new_s;
     }
 
     public int getCardinality() {
