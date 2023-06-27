@@ -152,9 +152,9 @@ public class BackTrackGraphV2 {
         applyTransitiveFilter();
 
         //List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"),new LinkedList<>());
+        //List<Information> deleteEnrollment = resolve(operationIDS.get("deleteEnrollment"),new LinkedList<>());
         //List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
-        //List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
+        List<Information> postEnrollment = resolve(operationIDS.get("deleteEnrollment"), new LinkedList<>());
 
         // for(Information i : postPlayer) {
         //     System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
@@ -167,7 +167,7 @@ public class BackTrackGraphV2 {
         //     }
         // }
 
-         for(Information i : deletePlayer) {
+        for(Information i : postEnrollment) {
             System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
             if(i.hasArguments()) {
                 List<Information> args = i.getArguments();
@@ -175,6 +175,7 @@ public class BackTrackGraphV2 {
                 for(Information args_i : args) {
                     System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
                 }
+                System.out.println("End of the arguments");
             }
         }
 
@@ -569,14 +570,14 @@ public class BackTrackGraphV2 {
     private List<Information> copeWithDelete(Operation o, List<Information> seq) {
         // deleteP $2 - operation in question
         // Let's see if we have uses
-        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+        Operation father = getCreator(o);
+        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(father);
 
         Set<Operation> op_dependecy = new HashSet<>();
 
         for(DefaultEdge e : edge_set) {
             if(e instanceof YellowEdge) {
                 Operation op = btg.getEdgeTarget(e);
-                
                 op_dependecy.add(op);
             }
         }
@@ -605,6 +606,7 @@ public class BackTrackGraphV2 {
             }
 
             if(toDelete == null) {
+              
                 // This mean that there is no available operation to do that
                 // or simply the history_list is empty, this means
                 // that we will have to backtrack! We must
@@ -614,8 +616,10 @@ public class BackTrackGraphV2 {
                 // we will have to explore until we reach "terminal" posts
 
                 List<Operation> needed = needed(o); // This should work but we better test it
+               
+                
                 // check also the order of the things
-
+                
                 List<Information> toReturn = backTrackDelete(o,needed);
                 return toReturn;
             } else {
@@ -695,37 +699,35 @@ public class BackTrackGraphV2 {
     // This will have a different logic from the backTrackPost we cannot just copy paste it!
 
     private List<Information> backTrackDelete(Operation root,List<Operation> needed) {
-        // Here we are receiving deletePlayer for instance
+        // Here we are receiving deletePlayer for instance, deletePlayer is our root!
         List<Information> toReturn = new LinkedList<>();
         Stack<Information> stack = new Stack<>();
-        // We already know the operations that we have to back-track
-        // Important for the future : we probably will need the
-        // method that counts the outgoing edges to know the order
-        // of certain posts
-
-        // Let's set the cardinality of the arguments before-hand
-        // since we will know it
         
         List<Information> list_root = history.get(getCreator(root).getOperationID());
         // Maybe if we adapt the backTrackPost we could re-use it here??!
-        Information i_root = new Information(root, Status.AVAILABLE, list_root.size()+1);
-        for(Operation o : needed) {
-            Information i_father = new Information(o,Status.UNAVAILABLE,history.get(o.getOperationID()).size()+1);
-            i_root.addArgument(i_father);
-        }
+        Information i_root = new Information(root, Status.UNAVAILABLE, list_root.size()+1);
         stack.push(i_root);
-
-        // Now let's put into the stack the operations that it needs
-        for(Operation o : needed) {
-            List<Information> list_op = history.get(o.getOperationID());
-            Information i = new Information(o,Status.UNAVAILABLE,list_op.size()+1);
+        needed.removeAll(List.of(getCreator(root)));
+        List<Information> backTrackedInfo = backTrackPost(getCreator(root), needed);
+        Collections.reverse(backTrackedInfo); // we must do this cause if we don't we lose the effect of the stack
+        
+        for(Information i : backTrackedInfo) {
+            if(i.hasArguments()) {
+                List<Information> args = i.getArguments();
+                for(Information i_args : args) {
+                    i_args.setStatus(Status.UNAVAILABLE);
+                }
+            }
+            i.setStatus(Status.UNAVAILABLE);
             stack.push(i);
         }
-
         while(!stack.isEmpty()) {
             toReturn.add(stack.pop());
         }
 
+        for(Information i_print : toReturn) {
+            System.out.println(i_print.getOperation().getOperationID());
+        }
         return toReturn;
     }
 
@@ -996,31 +998,47 @@ public class BackTrackGraphV2 {
 
     private List<Information> backTrackPost(Operation root,List<Operation> needed) {
         // We already know the operations that we have to back-track
-        // Important for the future : we probably will need the
-        // method that counts the outgoing edges to know the order
-        // of certain posts
+        // Let's change this method to be able to be used in
+        // simple posts and compound posts!
+        
+        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(root);
+        boolean simple = true;
+        for(DefaultEdge e : edge_set) {
+            if(e instanceof TimeEdge) {
+                simple = false;
+                break;
+            }
+        }
 
-        // Let's set the cardinality of the arguments before-hand
-        // since we will know it
         List<Information> toReturn = new LinkedList<>();
-        Stack<Information> stack = new Stack<>();
-        List<Information> list_root = history.get(root.getOperationID());
-        Information i_root = new Information(root, Status.AVAILABLE, list_root.size()+1);
-        for(Operation o : needed) {
-            Information i_father = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
-            i_root.addArgument(i_father);
+    
+        if(simple) {
+            Information new_info = new Information(root,Status.AVAILABLE,history.get(root.getOperationID()).size()+1);
+            toReturn = List.of(new_info);
         }
-        stack.push(i_root);
+       
+        else {
 
-        // Now let's put into the stack the operations that it needs
-        for(Operation o : needed) {
-            List<Information> list_op = history.get(o.getOperationID());
-            Information i = new Information(o,Status.AVAILABLE,list_op.size()+1);
-            stack.push(i);
-        }
+            Stack<Information> stack = new Stack<>();
+            List<Information> list_root = history.get(root.getOperationID());
+            Information i_root = new Information(root, Status.AVAILABLE, list_root.size()+1);
+            for(Operation o : needed) {
+                Information i_father = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
+                i_root.addArgument(i_father);
+            }
+            stack.push(i_root);
 
-        while(!stack.isEmpty()) {
-            toReturn.add(stack.pop());
+            // Now let's put into the stack the operations that it needs
+            for(Operation o : needed) {
+                List<Information> list_op = history.get(o.getOperationID());
+                Information i = new Information(o,Status.AVAILABLE,list_op.size()+1);
+                stack.push(i);
+            }
+
+            while(!stack.isEmpty()) {
+                toReturn.add(stack.pop());
+            }
+            
         }
 
         return toReturn;
