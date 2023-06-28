@@ -151,7 +151,7 @@ public class BackTrackGraphV2 {
         inferLinks_v3();
         applyTransitiveFilter();
 
-        //List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
         //List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
         //List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
         List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
@@ -192,6 +192,18 @@ public class BackTrackGraphV2 {
         //List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
         //List<Information> postEnrollment = resolve(operationIDS.get("deleteEnrollment"), new LinkedList<>());
 
+        for(Information i : postPlayer) {
+            System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
+            if(i.hasArguments()) {
+                List<Information> args = i.getArguments();
+                System.out.println("Arguments : ");
+                for(Information args_i : args) {
+                    System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
+                }
+                System.out.println("End of the arguments");
+            }
+        }
+
         for(Information i : deletePlayer) {
             System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
             if(i.hasArguments()) {
@@ -203,17 +215,7 @@ public class BackTrackGraphV2 {
             }
         }
 
-        // for(Information i : postPlayer) {
-        //     System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
-        //     if(i.hasArguments()) {
-        //         List<Information> args = i.getArguments();
-        //         System.out.println("Arguments : ");
-        //         for(Information args_i : args) {
-        //             System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
-        //         }
-        //         System.out.println("End of the arguments");
-        //     }
-        // }
+     
 
         
 
@@ -674,6 +676,7 @@ public class BackTrackGraphV2 {
             }   
             
         } else {
+
             // This means that this POST might create a cascade deletion!
             // Here the scenarios will be the same, if we don't have a POST
             // for this deletion then create one and this will never trigger
@@ -701,6 +704,8 @@ public class BackTrackGraphV2 {
                 // that we will have to backtrack! We must
                 // create an enrollment in order to delete it!
 
+                // When we backtrack we don't need to worry with the cascade deletion
+
                 List<Operation> needed = needed(o); // This should work but we better test it
                 List<Information> toReturn = backTrackDelete(o,needed);
                 
@@ -708,12 +713,22 @@ public class BackTrackGraphV2 {
             } else {
                 // This means that there is an available one
                 // we do not need to backtrack
-                // And we already know wich one to use! Update the history
-                Information info_to_delete = history_list.get(position);
-                info_to_delete.setStatus(Status.UNAVAILABLE);
-                Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality());
-                List<Information> toReturn = List.of(to_return);
+                // And we already know wich one to use!
+                // The thing here is that it can causa cascade delete!
 
+                Information info_to_delete = history_list.get(position); // postX $...
+                //info_to_delete.setStatus(Status.UNAVAILABLE);
+                Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality()); // deleteX $.., this is the original delete
+
+                // Now let's check for it's uses!
+                Operation uses = spreadCorruption(info_to_delete);
+
+                // Now for the uses let's update the data structure and create the sequence!
+                List<Information> sequence = cascadeDelete(uses);
+
+                sequence.add(to_return);
+                List<Information> toReturn = List.of(to_return);
+                System.out.println("I got here");
                 
                 return toReturn;
             }   
@@ -729,6 +744,122 @@ public class BackTrackGraphV2 {
         
         
     }
+
+    /**
+     * This will retrieve the sequence that we must do the cascade deletion
+     * update the data structure and retrieve it!
+     * @param toDelete
+     * @return
+     */
+    private List<Information> cascadeDelete(Operation o_corrupted) {
+
+        // Let's just get the operation in question!
+        List<Information> info_corrupted = history.get(o_corrupted.getOperationID());
+        List<Information> toReturn = new LinkedList<>();
+        
+        for(Information i : info_corrupted) {
+            if(i.getStatus() == Status.CORRUPTED) {
+                i.setStatus(Status.UNAVAILABLE);
+                Information its_delete = extractDeletion(i);
+                toReturn.add(its_delete);
+            }
+        }
+
+        return toReturn;
+
+        // Now for each one that we encounter that is corrupted let's just
+        // create a deletion for it
+
+
+        // for(Information i : toDelete) {
+        //     List<Information> history_list = history.get(i.getOperation().getOperationID());
+        //     for(Information i2 : history_list) {
+        //         // Let's find the one that is equals!
+        //         if(i.equals(i2)) {
+        //             Information extracted = extractDeletion(i2);
+        //             // Let's update te POST with the UNAVAILABILITY
+        //             i2.setStatus(Status.UNAVAILABLE);
+
+        //         }
+        //     }
+        // }
+
+    }
+
+    /**
+     * This will extract a delete operation from the corresponding POST
+     * @param i
+     * @return
+     */
+    private Information extractDeletion(Information i) {
+
+        Set<DefaultEdge> edges = btg.incomingEdgesOf(i.getOperation());
+        for(DefaultEdge e : edges) {
+            if(btg.getEdgeSource(e).getVerb().equals("DELETE")) {
+                return new Information(btg.getEdgeSource(e), Status.UNAVAILABLE, i.getCardinality());
+            }
+        }
+        return null;    
+    }
+
+    /**
+     * Gets the uses for the cascade deletion
+     * @param info_of_deletion
+     * @return
+     */
+    private Operation spreadCorruption(Information info_of_deletion) {
+        // This is receiving postPlayer for instance
+
+        // Let's follow the yellow edges to know where this operation
+        // could be used!
+        List<Operation> yellow_connection = new LinkedList<>();
+        List<Information> using_this = new LinkedList<>();
+        Operation toReturn = null;
+
+        Set<DefaultEdge> set = btg.outgoingEdgesOf(info_of_deletion.getOperation());
+
+        for(DefaultEdge e : set) {
+            if(e instanceof YellowEdge) {
+                yellow_connection.add(btg.getEdgeTarget(e));
+            }
+        }
+
+
+        // Now let's see if some of them are using it as it's arguments
+        for(Operation o : yellow_connection) {
+            toReturn = o; // we know that in this example it will only be one -> do more generic after
+            // In this example I am assuming that we only lead to one yellow_connection!
+            // If not the using_this should be a List<List<Information>>...
+            List<Information> child_list = history.get(o.getOperationID());
+            // Let's iterate it all and find the ones that might be in use
+            for(Information i : child_list) {
+                if(i.hasArguments()) {
+                    List<Information> arguments = i.getArguments();
+                    if(arguments.contains(info_of_deletion)) {
+                        // This means it will be corrupted so we need to delete it also!
+                        i.setStatus(Status.CORRUPTED);
+                        using_this.add(i);
+                    }
+                }
+            }
+
+        }
+
+        return toReturn;
+
+        // After this filter we have the operations that are using this lil fellow
+        // Let's create the deletes for them!
+        // NOTE : in the future if this one uses it also
+        // we should be able to cascade it further down!
+         
+        // Now in yellow_connection we have the operation that might use this post
+        // We will search into the history and check it's arguments and
+        // if it is in there we decease the operation
+        // and create a cascade deletion of that operation also!
+        // PROBLEM : how do we know the operation to call to delete? More links? :(
+        // Scan operation for DELETE in this URI!
+    }
+
 
     /**
      * Given an operation we want to traverse the graph until
@@ -984,7 +1115,13 @@ public class BackTrackGraphV2 {
 
         List<List<Information>> generated_possibilities = new LinkedList<>();
         for(Operation n : needed) {
-            List<Information> info = history.get(n.getOperationID());
+            List<Information> info = history.get(n.getOperationID()); // HERE WE SHOULD APPLY A FILTER!
+            List<Information> to_generate = new LinkedList<>();
+            for(Information i : info) {
+                if(i.getStatus() == Status.AVAILABLE) {
+                    to_generate.add(i);
+                }
+            }
 
             // We can check if one of them has absolutely nothing
             // if one of them has nothing we need to re-create them
@@ -992,7 +1129,7 @@ public class BackTrackGraphV2 {
             if(info.size() == 0) {
                 return null;
             }
-            generated_possibilities.add(info);
+            generated_possibilities.add(to_generate);
         }
 
         
