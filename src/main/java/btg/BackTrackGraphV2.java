@@ -152,9 +152,56 @@ public class BackTrackGraphV2 {
         applyTransitiveFilter();
 
         //List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        //List<Information> deleteEnrollment = resolve(operationIDS.get("deleteEnrollment"),new LinkedList<>());
         //List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
-        List<Information> postEnrollment = resolve(operationIDS.get("deleteEnrollment"), new LinkedList<>());
+        //List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
+        List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
+
+        // List<Information> pre_1 = history.get("postPlayer");
+        // List<Information> pre_2 = history.get("postTournament");
+        // List<Information> pre_3 = history.get("postEnrollment");
+        // System.out.println("Before deletion");
+        // for(Information i : pre_1) {
+        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        // }
+
+        // System.out.println("Before deletion");
+        // for(Information i : pre_2) {
+        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        // }
+
+        // System.out.println("Before deletion");
+        // for(Information i : pre_3) {
+        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        // }
+        // List<Information> deleteEnrollment = resolve(operationIDS.get("deleteEnrollment"),new LinkedList<>());
+        
+        // System.out.println("After deletion");
+        // for(Information i : pre_1) {
+        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        // }
+
+        // System.out.println("After deletion");
+        // for(Information i : pre_2) {
+        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        // }
+
+        // System.out.println("After deletion");
+        // for(Information i : pre_3) {
+        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        // }
+        //List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
+        //List<Information> postEnrollment = resolve(operationIDS.get("deleteEnrollment"), new LinkedList<>());
+
+        for(Information i : deletePlayer) {
+            System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
+            if(i.hasArguments()) {
+                List<Information> args = i.getArguments();
+                System.out.println("Arguments : ");
+                for(Information args_i : args) {
+                    System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
+                }
+            }
+        }
 
         // for(Information i : postPlayer) {
         //     System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
@@ -164,24 +211,13 @@ public class BackTrackGraphV2 {
         //         for(Information args_i : args) {
         //             System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
         //         }
+        //         System.out.println("End of the arguments");
         //     }
         // }
 
-        for(Information i : postEnrollment) {
-            System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
-            if(i.hasArguments()) {
-                List<Information> args = i.getArguments();
-                System.out.println("Arguments : ");
-                for(Information args_i : args) {
-                    System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
-                }
-                System.out.println("End of the arguments");
-            }
-        }
-
         
 
-        // for(Information i : postTournament) {
+        // for(Information i : deleteEnrollment) {
         //     System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
         //     if(i.hasArguments()) {
         //         List<Information> args = i.getArguments();
@@ -621,6 +657,7 @@ public class BackTrackGraphV2 {
                 // check also the order of the things
                 
                 List<Information> toReturn = backTrackDelete(o,needed);
+                
                 return toReturn;
             } else {
                 // This means that there is an available one
@@ -631,17 +668,66 @@ public class BackTrackGraphV2 {
                 info_to_delete.setStatus(Status.UNAVAILABLE);
                 Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality());
                 List<Information> toReturn = List.of(to_return);
+
+                
                 return toReturn;
             }   
             
         } else {
-            // This means that this POST might create a cascade deletion
+            // This means that this POST might create a cascade deletion!
+            // Here the scenarios will be the same, if we don't have a POST
+            // for this deletion then create one and this will never trigger
+            // a cascade deletion
+           
+            Operation creator = getCreator(o);
+
+            List<Information> history_list = history.get(creator.getOperationID()); 
+
+            Information toDelete = null;
+            int position = 0;
+
+            for(Information info : history_list) {
+                if(info.getStatus() == Status.AVAILABLE) {
+                    toDelete = info;
+                    break;  
+                }
+                position++;
+            }
+
+            if(toDelete == null) {
+              
+                // This mean that there is no available operation to do that
+                // or simply the history_list is empty, this means
+                // that we will have to backtrack! We must
+                // create an enrollment in order to delete it!
+
+                List<Operation> needed = needed(o); // This should work but we better test it
+                List<Information> toReturn = backTrackDelete(o,needed);
+                
+                return toReturn;
+            } else {
+                // This means that there is an available one
+                // we do not need to backtrack
+                // And we already know wich one to use! Update the history
+                Information info_to_delete = history_list.get(position);
+                info_to_delete.setStatus(Status.UNAVAILABLE);
+                Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality());
+                List<Information> toReturn = List.of(to_return);
+
+                
+                return toReturn;
+            }   
+
+            // If we have an available one we should check for it's uses
+            // and trigger a cascade deletion
+
             // checkForUses()
             // if has uses delete them
             // delete itself
 
         }
-        return null;
+        
+        
     }
 
     /**
@@ -1012,6 +1098,7 @@ public class BackTrackGraphV2 {
 
         List<Information> toReturn = new LinkedList<>();
     
+        // I had to do this in order for the delete to work
         if(simple) {
             Information new_info = new Information(root,Status.AVAILABLE,history.get(root.getOperationID()).size()+1);
             toReturn = List.of(new_info);
