@@ -152,46 +152,47 @@ public class BackTrackGraphV2 {
         applyTransitiveFilter();
 
         List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        //List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
-        //List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
-        List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
-
-        // List<Information> pre_1 = history.get("postPlayer");
-        // List<Information> pre_2 = history.get("postTournament");
-        // List<Information> pre_3 = history.get("postEnrollment");
-        // System.out.println("Before deletion");
-        // for(Information i : pre_1) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
-
-        // System.out.println("Before deletion");
-        // for(Information i : pre_2) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
-
-        // System.out.println("Before deletion");
-        // for(Information i : pre_3) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
-        // List<Information> deleteEnrollment = resolve(operationIDS.get("deleteEnrollment"),new LinkedList<>());
+        List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
+        List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
         
-        // System.out.println("After deletion");
-        // for(Information i : pre_1) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
 
-        // System.out.println("After deletion");
-        // for(Information i : pre_2) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
+        List<Information> pre_1 = history.get("postPlayer");
+        List<Information> pre_2 = history.get("postTournament");
+        List<Information> pre_3 = history.get("postEnrollment");
 
-        // System.out.println("After deletion");
-        // for(Information i : pre_3) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
-        //List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
-        //List<Information> postEnrollment = resolve(operationIDS.get("deleteEnrollment"), new LinkedList<>());
+        System.out.println("Before deletion");
+        for(Information i : pre_1) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
 
+        System.out.println("Before deletion");
+        for(Information i : pre_2) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+
+        System.out.println("Before deletion");
+        for(Information i : pre_3) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+
+        List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
+       
+        
+        System.out.println("After deletion");
+        for(Information i : pre_1) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+
+        System.out.println("After deletion");
+        for(Information i : pre_2) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+
+        System.out.println("After deletion");
+        for(Information i : pre_3) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+       
         for(Information i : postPlayer) {
             System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
             if(i.hasArguments()) {
@@ -204,6 +205,30 @@ public class BackTrackGraphV2 {
             }
         }
 
+        for(Information i : postTournament) {
+            System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
+            if(i.hasArguments()) {
+                List<Information> args = i.getArguments();
+                System.out.println("Arguments : ");
+                for(Information args_i : args) {
+                    System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
+                }
+            }
+        }
+
+         for(Information i : postEnrollment) {
+            System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
+            if(i.hasArguments()) {
+                List<Information> args = i.getArguments();
+                System.out.println("Arguments : ");
+                for(Information args_i : args) {
+                    System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
+                }
+            }
+            
+        }
+
+    
         for(Information i : deletePlayer) {
             System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
             if(i.hasArguments()) {
@@ -215,32 +240,7 @@ public class BackTrackGraphV2 {
             }
         }
 
-     
-
-        
-
-        // for(Information i : deleteEnrollment) {
-        //     System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
-        //     if(i.hasArguments()) {
-        //         List<Information> args = i.getArguments();
-        //         System.out.println("Arguments : ");
-        //         for(Information args_i : args) {
-        //             System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
-        //         }
-        //     }
-        // }
-
-        // for(Information i : postEnrollment) {
-        //     System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
-        //     if(i.hasArguments()) {
-        //         List<Information> args = i.getArguments();
-        //         System.out.println("Arguments : ");
-        //         for(Information args_i : args) {
-        //             System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
-        //         }
-        //     }
-            
-        // }
+       
        
     }
 
@@ -720,17 +720,23 @@ public class BackTrackGraphV2 {
                 //info_to_delete.setStatus(Status.UNAVAILABLE);
                 Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality()); // deleteX $.., this is the original delete
 
+                System.out.println("We are spreading!!!");
                 // Now let's check for it's uses!
                 Operation uses = spreadCorruption(info_to_delete);
+             
+                info_to_delete.setStatus(Status.UNAVAILABLE);
 
                 // Now for the uses let's update the data structure and create the sequence!
                 List<Information> sequence = cascadeDelete(uses);
-
+                for(Information it : sequence) {
+                    System.out.println("WWWW " + it.getOperation().getOperationID());
+                }
                 sequence.add(to_return);
-                List<Information> toReturn = List.of(to_return);
-                System.out.println("I got here");
+                for(Information it : sequence) {
+                    System.out.println("WWWW " + it.getOperation().getOperationID());
+                }
                 
-                return toReturn;
+                return sequence;
             }   
 
             // If we have an available one we should check for it's uses
@@ -837,6 +843,7 @@ public class BackTrackGraphV2 {
                     List<Information> arguments = i.getArguments();
                     if(arguments.contains(info_of_deletion)) {
                         // This means it will be corrupted so we need to delete it also!
+                        System.out.println("I am corrupting!");
                         i.setStatus(Status.CORRUPTED);
                         using_this.add(i);
                     }
