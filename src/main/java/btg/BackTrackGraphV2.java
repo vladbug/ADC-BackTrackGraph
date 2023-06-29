@@ -148,37 +148,40 @@ public class BackTrackGraphV2 {
         inferLinks_v3();
         applyTransitiveFilter();
 
-        //List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        // List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>())
+        // List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
         // List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
+        // List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
+        //List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
         // List<Information> postPlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
-        System.out.println("State of data");
-        getStateOfData();
-        List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        getStateOfData();
-        System.out.println("*****************");
-        getStateOfData();
-        List<Information> postPlayer2 = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        getStateOfData();
-        System.out.println("*****************");
-        getStateOfData();
-        List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
-        getStateOfData();
-        System.out.println("*****************");
-        getStateOfData();
-        List<Information> getPlayer = resolve(operationIDS.get("getPlayer"), new LinkedList<>());
-        getStateOfData();
-        System.out.println("*****************");
-        System.out.println("################");
+        // System.out.println("State of data");
+        // getStateOfData();
+        // List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        // getStateOfData();
+        // System.out.println("*****************");
+        // getStateOfData();
+        // List<Information> postPlayer2 = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        // getStateOfData();
+        // System.out.println("*****************");
+        // getStateOfData();
+        // List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
+        // getStateOfData();
+        // System.out.println("*****************");
+        // getStateOfData();
+        // List<Information> getPlayer = resolve(operationIDS.get("getPlayer"), new LinkedList<>());
+        // getStateOfData();
+        // System.out.println("*****************");
+        // System.out.println("################");
 
-        print_information(postPlayer);
-        print_information(postPlayer2);
-        print_information(deletePlayer);
-        print_information(getPlayer);
+        //print_information(postEnrollment);
+        // print_information(postPlayer2);
+        // print_information(deletePlayer);
+        // print_information(getPlayer);
+        for(int i = 0; i < 1000; i++) {
+            System.out.println("Started producing...");
+            generateSequence(10);
+            System.out.println("Finished producing...");
+        }
         
-
-    
-
     }
 
     private void getStateOfData() {
@@ -209,19 +212,6 @@ public class BackTrackGraphV2 {
                 for(Information args_i : args) {
                     System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
                 }
-            }
-        }
-    }
-
-
-    public void amIcrazy() { // i am not
-        Set<Operation> s = btg.vertexSet();
-
-        for(Operation o : s) {
-            System.out.println(o.getOperationID());
-            List<String> req = o.getRequires();
-            for(String r : req) {
-                System.out.println(r);
             }
         }
     }
@@ -359,7 +349,7 @@ public class BackTrackGraphV2 {
         Map<String,Set<String>> toMaintain = new HashMap<>();
 
         for(Operation o : s) {
-            System.out.println("Operation in question: " + o.getOperationID());
+            //System.out.println("Operation in question: " + o.getOperationID());
             // This will be performed for EVERY operation in our graph
             // We wan't to get the red links of each one of them
             Set<DefaultEdge> red_edges = new HashSet<>();
@@ -408,21 +398,9 @@ public class BackTrackGraphV2 {
                 sets.add(potencial_set);
             }
 
-            for(Set<String> ss : sets) {
-                System.out.println("This is one of the sets");
-                for(String o_set : ss) {
-                    System.out.println(o_set);
-                }
-                System.out.println("Finished printing the set in question");
-            }
-
+            
             Set<String> different_elements = my_method(sets);
-            System.out.println(different_elements);
-            for(String o_diff : different_elements) {
-                
-                System.out.println(o_diff);
-            }
-
+          
             toMaintain.put(o.getOperationID(), different_elements);
 
             // In different_elements we have the links that we have to maintain!
@@ -442,7 +420,7 @@ public class BackTrackGraphV2 {
 
             // Now for each of the red links let's remove some
             Set<String> set = toMaintain.get(o.getOperationID());
-            System.out.println(set);
+       
             if(set != null) {
                 red_edges.removeAll(set);
                 for(String to_remove : red_edges) {
@@ -507,18 +485,17 @@ public class BackTrackGraphV2 {
         }
     }
 
-    public List<Information> generateSequence(int nr_iterations) {
+    public void generateSequence(int nr_iterations) {
 
         List<Information> sequence = new LinkedList<>();
         for(int i = 0; i < nr_iterations; i++) {
             Operation o = getRandomOperation();
-            resolve(o,sequence);
+            // System.out.println("This is the random operation in question: " + o.getOperationID());
+            // System.out.println("This is the state of data");
+            // getStateOfData();
+            print_information(resolve(o,sequence));
         }
 
-   
-
-
-        return null;
     }
 
     /**
@@ -744,10 +721,10 @@ public class BackTrackGraphV2 {
                 // we do not need to backtrack
                 
                 // And we already know wich one to use! Update the history
-                System.out.println("We are here");
+              
                 Information info_to_delete = history_list.get(position);
                 info_to_delete.setStatus(Status.UNAVAILABLE);
-                System.out.println("We changed stuff");
+         
                 Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality());
                 List<Information> toReturn = List.of(to_return);
 
@@ -800,7 +777,7 @@ public class BackTrackGraphV2 {
                 //info_to_delete.setStatus(Status.UNAVAILABLE);
                 Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality()); // deleteX $.., this is the original delete
 
-                System.out.println("We are spreading!!!");
+              
                 // Now let's check for it's uses!
                 Operation uses = spreadCorruption(info_to_delete);
              
@@ -918,7 +895,7 @@ public class BackTrackGraphV2 {
                     List<Information> arguments = i.getArguments();
                     if(arguments.contains(info_of_deletion)) {
                         // This means it will be corrupted so we need to delete it also!
-                        System.out.println("I am corrupting!");
+                   
                         i.setStatus(Status.CORRUPTED);
                         using_this.add(i);
                     }
@@ -1033,9 +1010,7 @@ public class BackTrackGraphV2 {
             toReturn.add(stack.pop());
         }
 
-        for(Information i_print : toReturn) {
-            System.out.println(i_print.getOperation().getOperationID());
-        }
+       
         return toReturn;
     }
 
@@ -1070,14 +1045,14 @@ public class BackTrackGraphV2 {
 
         if(list.isEmpty()) {
             // Primeira entrada de todas no algortimo
-            System.out.println("Is empty");
+         
             int cardinality = 1;
             Information i = new Information(o, status, cardinality);
             list.add(i);
             List<Information> toReturn = List.of(i);
             return toReturn;
         } else {
-            System.out.println("Isn't empty");
+          
             int index = list.size();
             Information last_info = list.get(index-1);
             Information i = new Information(o,status,last_info.getCardinality()+1);
@@ -1123,7 +1098,7 @@ public class BackTrackGraphV2 {
                         needed.add(op);
                     }
                 }
-                System.out.println("I am backtracking");
+        
                 List<Information> backtracked = backTrackPost(o, needed);
                 for(Information info_update : backtracked) {
                     List<Information> info_op = history.get(info_update.getOperation().getOperationID());
@@ -1143,10 +1118,6 @@ public class BackTrackGraphV2 {
             
             if(result != null) {
 
-                System.out.println("Valid arguments: ");
-                for(Information i3 : result) {
-                    System.out.println(i3.getOperation().getOperationID() + i3.getCardinality());
-                }
                 // Re-using existent ones
                 for(Information info : result) {
                     i.addArgument(info);
@@ -1168,7 +1139,7 @@ public class BackTrackGraphV2 {
                     }
                 }
 
-                System.out.println("I am backtracking");
+            
                 List<Information> backtracked = backTrackPost(o, needed);
                 for(Information info_update : backtracked) {
                     List<Information> info_op = history.get(info_update.getOperation().getOperationID());
@@ -1204,6 +1175,8 @@ public class BackTrackGraphV2 {
         // We cannot assume that it's just two for loops inside one another
         // We must be generic ! There might be 3 , 4 or even 5 enchanced loops
 
+
+        // I forgot how this worked lmao, remembered :)
         List<List<Information>> generated_possibilities = new LinkedList<>();
         for(Operation n : needed) {
             List<Information> info = history.get(n.getOperationID()); // HERE WE SHOULD APPLY A FILTER!
@@ -1214,12 +1187,13 @@ public class BackTrackGraphV2 {
                 }
             }
 
-            // We can check if one of them has absolutely nothing
+            // We can check if ONE OF them has absolutely nothing
             // if one of them has nothing we need to re-create them
             // This was the bug fix for when we had nothing in our history
-            if(info.size() == 0) {
+            if(to_generate.size() == 0) { // This was the strange bug fix!
                 return null;
             }
+
             generated_possibilities.add(to_generate);
         }
 
@@ -1237,40 +1211,18 @@ public class BackTrackGraphV2 {
         // that combination 
         List<Information> my_list = history.get(o.getOperationID());
 
-        System.out.println("A imprimir antes de verificar cenas");
-        for(Information ia : my_list) {
-            System.out.println(ia.getCardinality() + ia.getOperation().getOperationID());
-            System.out.println("ARGS");
-            List<Information> lol = ia.getArguments();
-            for(Information a : lol ) {
-                System.out.println(a.getOperation().getOperationID() + a.getCardinality());
-            }
-        }
-
-        System.out.println("Combinatoria");
-        for(List<Information> a : result) {
-            for(Information i : a) {
-                System.out.println(i.getOperation().getOperationID() + i.getCardinality());
-            }
-        }
+      
 
         for(List<Information> list : result) {
             int counter = 0;
             for(Information i : my_list) {
-                System.out.println(i.getArguments());
-                System.out.println(list);
-                System.out.println(i.getArguments().equals(list));
                 if(!i.hasTheSameArguments(list)) {
                     counter++;
                 }   
             }
-            System.out.println("---");
-            System.out.println(counter);
-            System.out.println("---");
             
             if(counter == my_list.size()) {
                 // This means the combination is applicable, is a valid one to use
-                System.out.println(list);
                 return list;
             }
         }
@@ -1534,14 +1486,11 @@ public class BackTrackGraphV2 {
         list.add(generateMultipleSequence(o33));
 
         for(ReturnInfo i : list) {
-            System.out.println("Printing...");
+     
             Operation to_print = i.getOperation();
             Map<Operation,Integer> m = i.getCardinalities();
-            System.out.println("This is the operation: " + to_print.getOperationID());
-            System.out.println("And these are my arguments: ");
-            m.forEach((key,value) -> {
-                System.out.println(key.getOperationID() + " $" + value);
-            });
+        
+       
         }
 
     }
@@ -1568,14 +1517,9 @@ public class BackTrackGraphV2 {
         
 
         for(ReturnInfo i : toReturn) {
-            System.out.println(i.getOperation().getOperationID() + i.getOperationCardinality());
-            System.out.println("And these are my arguments");
-            Map<Operation,Integer> options = i.getCardinalities();
-
-            options.forEach((key,value) -> {
-                System.out.println(key.getOperationID() + " " + value);
-            }
-            );
+         
+           
+        Map<Operation,Integer> options = i.getCardinalities();
 
         }
     }
@@ -1668,7 +1612,7 @@ public class BackTrackGraphV2 {
                     // If it is null this means that we are in the beginning of everything!
                     //int c_of_timed = postBag.get(timed_operation);
                     //r.addCardinality(o, c_of_timed++);
-                    System.out.println("The timed operation does not exist yet");
+                 
                 }
 
                 r.setOperationCardinality(c);
@@ -1758,7 +1702,6 @@ public class BackTrackGraphV2 {
             // entre 0 e value - 1 original
             // com +1 será entre 1 e value! é o que queremos
             int rnd = new Random().nextInt(value) + 1;
-            System.out.println("This is the random number generated: " + rnd);
             information.addCardinality(key, rnd);
            
             
