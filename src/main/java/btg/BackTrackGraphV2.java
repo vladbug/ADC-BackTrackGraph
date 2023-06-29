@@ -149,69 +149,49 @@ public class BackTrackGraphV2 {
         applyTransitiveFilter();
 
         //List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        List<Information> pre_1 = history.get("postPlayer");
-
-        System.out.println("Before getter");
-        for(Information i : pre_1) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        }
-
-        List<Information> getPlayer = resolve(operationIDS.get("getPlayer"), new LinkedList<>());
-        // List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
-        
-        System.out.println("After getter");
-        for(Information i : pre_1) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        }
-        // List<Information> pre_2 = history.get("postTournament");
-        // List<Information> pre_3 = history.get("postEnrollment");
-
-       
-
-        // System.out.println("Before deletion");
-        // for(Information i : pre_2) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
-
-        // System.out.println("Before deletion");
-        // for(Information i : pre_3) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
-
+        // List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>())
         // List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
         // List<Information> postPlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
+        System.out.println("State of data");
+        getStateOfData();
+        // List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
+        getStateOfData();
         // List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
+        List<Information> checkEnrollment = resolve(operationIDS.get("getTournament"), new LinkedList<>());
+        // print_information(postPlayer);
+        print_information(postTournament);
+        // print_information(postEnrollment);
+        print_information(checkEnrollment);
+        System.out.println("State of data");
+        getStateOfData();
         
-        // System.out.println("After deletion");
-        // for(Information i : pre_1) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
-
-        // System.out.println("After deletion");
-        // for(Information i : pre_2) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
-
-        // System.out.println("After deletion");
-        // for(Information i : pre_3) {
-        //     System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        // }
-
-        // for(Information i : postPlayer) {
-        //     System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
-        //     if(i.hasArguments()) {
-        //         List<Information> args = i.getArguments();
-        //         System.out.println("Arguments : ");
-        //         for(Information args_i : args) {
-        //             System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
-        //         }
-        //     }
-        // }
-
-       
 
     
-        for(Information i : getPlayer) {
+
+    }
+
+    private void getStateOfData() {
+        List<Information> pre_1 = history.get("postPlayer");
+        List<Information> pre_2 = history.get("postTournament");
+        List<Information> pre_3 = history.get("postEnrollment");
+
+        for(Information i : pre_1) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+        System.out.println("---------");
+        for(Information i : pre_2) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+        System.out.println("---------");
+        for(Information i : pre_3) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+        System.out.println("---------");
+    }
+
+    private void print_information(List<Information> info) {
+        for(Information i : info) {
             System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
             if(i.hasArguments()) {
                 List<Information> args = i.getArguments();
@@ -221,33 +201,6 @@ public class BackTrackGraphV2 {
                 }
             }
         }
-
-        // for(Information i : postPlayer) {
-        //     System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
-        //     if(i.hasArguments()) {
-        //         List<Information> args = i.getArguments();
-        //         System.out.println("Arguments : ");
-        //         for(Information args_i : args) {
-        //             System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
-        //         }
-        //         System.out.println("End of the arguments");
-        //     }
-        // }
-
-        //  for(Information i : postEnrollment) {
-        //     System.out.println(i.getOperation().getOperationID() + " " + "$"+ i.getCardinality() + " STATUS: " + i.getStatus());
-        //     if(i.hasArguments()) {
-        //         List<Information> args = i.getArguments();
-        //         System.out.println("Arguments : ");
-        //         for(Information args_i : args) {
-        //             System.out.println(args_i.getOperation().getOperationID() + " " + "$"+ args_i.getCardinality() + " STATUS: " + args_i.getStatus());
-        //         }
-        //     }
-            
-        // }
-
-       
-       
     }
 
 
@@ -601,6 +554,10 @@ public class BackTrackGraphV2 {
         // If we do backtrack we will add things to the data structure
         // If we don't backtrack it is just easy
 
+        // These are the getters can can always happne no matter what
+        if(btg.outDegreeOf(o) == 0) {
+            return List.of(new Information(o,Status.AVAILABLE,404));
+        }
         // Let's consider the scenario where we don't need to back-track
         Operation creator = getCreator(o);
 
@@ -628,6 +585,68 @@ public class BackTrackGraphV2 {
                 // we will have to explore until we reach "terminal" posts
                 Information append = new Information(o, Status.AVAILABLE,history_list.size()+1);
                 List<Operation> needed = needed(o); // This should work but we better test it
+                needed.remove(creator);
+                // check also the order of the things
+                List<Information> toReturn = backTrackPost(creator,needed);
+
+                 for(Information info_update : toReturn) {
+                    List<Information> info_op = history.get(info_update.getOperation().getOperationID());
+                    info_op.add(info_update);
+                }
+
+                toReturn.add(append);
+                
+                return toReturn;
+                
+            } else {
+
+                // This means that there is an available one
+                // we do not need to backtrack
+                
+                // And we already know wich one to use! Update the history
+                Information info_to_get = history_list.get(position);
+                
+                Information to_return = new Information(o,Status.AVAILABLE,info_to_get.getCardinality());
+                List<Information> toReturn = List.of(to_return);
+
+                return toReturn;
+            }   
+    }
+
+    private List<Information> copeWithPut(Operation o, List<Information> seq) {
+        // These must be the "easy" ones
+        // Here we can have two scenarios , either we back track or not
+        // If we do backtrack we will add things to the data structure
+        // If we don't backtrack it is just easy
+
+        // Let's consider the scenario where we don't need to back-track
+        Operation creator = getCreator(o);
+
+        List<Information> history_list = history.get(creator.getOperationID()); // wrong, because we are searching for deleteE and it is not in history
+        Information toUpdate = null;
+        int position = 0;
+
+        // Get the first available POST for deletion
+        for(Information info : history_list) {
+            if(info.getStatus() == Status.AVAILABLE) {
+                toUpdate = info;
+                break;  
+            }
+            position++;
+        }
+
+        if(toUpdate == null) {
+              
+                // This mean that there is no available operation to do that
+                // or simply the history_list is empty, this means
+                // that we will have to backtrack! We must
+                // create an enrollment in order to delete it!
+
+                // Now this cannot be that simples because in the new graph 
+                // we will have to explore until we reach "terminal" posts
+                Information append = new Information(o, Status.AVAILABLE,history_list.size()+1);
+                List<Operation> needed = needed(o); // This should work but we better test it
+                needed.remove(creator);
                 // check also the order of the things
                 List<Information> toReturn = backTrackPost(creator,needed);
 
@@ -652,14 +671,6 @@ public class BackTrackGraphV2 {
 
                 return toReturn;
             }   
-    }
-
-    private List<Information> copeWithPut(Operation o, List<Information> seq) {
-        // These must be the "easy" ones
-        // Here we can have two scenarios , either we back track or not
-        // If we do backtrack we will add things to the data structure
-        // If we don't backtrack it is just easy
-        return null;
     }
 
     private List<Information> copeWithDelete(Operation o, List<Information> seq) {
@@ -950,7 +961,7 @@ public class BackTrackGraphV2 {
 
         
         for(DefaultEdge e : edge_set) {
-            if(e instanceof TimeEdge) {
+            if(e instanceof TimeEdge || e instanceof LinkEdge) {
                 Operation op = btg.getEdgeTarget(e);
                 needed.add(op);
                 control.add(op);
