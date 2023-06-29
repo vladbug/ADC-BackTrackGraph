@@ -154,17 +154,27 @@ public class BackTrackGraphV2 {
         // List<Information> postPlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
         System.out.println("State of data");
         getStateOfData();
-        // List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
+        List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
         getStateOfData();
-        // List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
-        List<Information> checkEnrollment = resolve(operationIDS.get("getTournament"), new LinkedList<>());
-        // print_information(postPlayer);
-        print_information(postTournament);
-        // print_information(postEnrollment);
-        print_information(checkEnrollment);
-        System.out.println("State of data");
+        System.out.println("*****************");
         getStateOfData();
+        List<Information> postPlayer2 = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        getStateOfData();
+        System.out.println("*****************");
+        getStateOfData();
+        List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
+        getStateOfData();
+        System.out.println("*****************");
+        getStateOfData();
+        List<Information> getPlayer = resolve(operationIDS.get("getPlayer"), new LinkedList<>());
+        getStateOfData();
+        System.out.println("*****************");
+        System.out.println("################");
+
+        print_information(postPlayer);
+        print_information(postPlayer2);
+        print_information(deletePlayer);
+        print_information(getPlayer);
         
 
     
@@ -734,8 +744,10 @@ public class BackTrackGraphV2 {
                 // we do not need to backtrack
                 
                 // And we already know wich one to use! Update the history
+                System.out.println("We are here");
                 Information info_to_delete = history_list.get(position);
                 info_to_delete.setStatus(Status.UNAVAILABLE);
+                System.out.println("We changed stuff");
                 Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality());
                 List<Information> toReturn = List.of(to_return);
 
