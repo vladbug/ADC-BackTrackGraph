@@ -39,7 +39,7 @@ public class BackTrackGraphV2 {
      * This is map stores the operations based on their URLs
      * so for an URL we will have an operation associated to it
      */
-    private Map<String,Operation> operationsURLs; 
+    private Map<String,Operation> operationsURLs;
 
 
     /**
@@ -55,7 +55,7 @@ public class BackTrackGraphV2 {
 
     /**
      * This map will map the VERB of the operation to the operation
-     * 
+     *
      */
 
     private Map<Operation,String> operationVerbs;
@@ -70,8 +70,8 @@ public class BackTrackGraphV2 {
      * This is the new version of the postBag
      * It is more advanced and has a lot more information
      * I'm gonna name it : history
-     * 
-     * It will map an operationID into another map 
+     *
+     * It will map an operationID into another map
      * with cardinalities and statusses of things
      * This map will only cover ther POST
      * operations as it's keys!
@@ -89,22 +89,30 @@ public class BackTrackGraphV2 {
 
     /**
      * DEPRICATED
-     * This data structure will be responsible to manage 
+     * This data structure will be responsible to manage
      * the compound posts. They are very tricky to handle
-     * In here we only have one compound post but there 
+     * In here we only have one compound post but there
      * might be more.
-     * 
+     *
      * key : operationID
      * value : List<Argument> which are just a combinatorial calculus
      */
-    //private Map<String, 
+    //private Map<String,
 
-   
+
 
     // This will map , postTournamente$1 into the returnalInformation of the same
     private Map<String,ReturnInfo> returnalInformation;
 
     private Specification spec;
+
+    private boolean optimistic;
+
+    private boolean stop;
+
+    private int threshold;
+
+    private int nr_of_backtracks;
 
     public BackTrackGraphV2(Map<String, Operation> operations) {
 
@@ -117,11 +125,14 @@ public class BackTrackGraphV2 {
         operationVerbs = new HashMap<>(100);
         history = new HashMap<>(100);
         tombstone = new LinkedList<>();
-       
+        optimistic = true;
+        stop = false;
+        threshold = 1;
+        nr_of_backtracks = 0;
 
         // And now for each one we will the create the map within itself
         // Maybe not now and do it somewhere in front of the code
-        
+
 
         // Adding every operation as a vertex
         for (Map.Entry<String, Operation> entry: operations.entrySet()) {
@@ -143,14 +154,22 @@ public class BackTrackGraphV2 {
         } catch (Exception e) {
             // TODO: handle exception
         }
-        
+
         createRequiresConnections();
         inferLinks_v3();
         applyTransitiveFilter();
 
-        // List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        // List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
-        // List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
+       
+        //List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
+        // List<Information> getEnrollments = resolve(operationIDS.get("getTournamentEnrollments"), new LinkedList<>());
+        // List<Information> getTournaments = resolve(operationIDS.get("getTournaments"), new LinkedList<>());
+        //List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
+        // List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
+        // List<Information> deleteTournament = resolve(operationIDS.get("deleteTournament"), new LinkedList<>());
+        // List<Information> getPlayers = resolve(operationIDS.get("getPlayers"), new LinkedList<>());
+        // List<Information> updateTournament = resolve(operationIDS.get("updateTournament"), new LinkedList<>());
+        //List<Information> deleteEnrollment = resolve(operationIDS.get("deleteEnrollment"), new LinkedList<>());
+        //List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
         // getStateOfData();
         // System.out.println("AAAAAAAAAAAAAA");
         // //List<Information> deleteEnrollment = resolve(operationIDS.get("deleteEnrollment"), new LinkedList<>());
@@ -181,19 +200,32 @@ public class BackTrackGraphV2 {
         // getStateOfData();
         // System.out.println("*****************");
         // System.out.println("################");
+        
+        //print_information(postTournament);
+        // print_information(getEnrollments);
+        // print_information(getTournaments);
+        // print_information(postPlayer);
+        // print_information(deleteEnrollment);
+        // print_information(deletePlayer);
+        // print_information(deleteTournament);
+        // print_information(getPlayers);
+        // print_information(updateTournament);
 
-        //print_information(postEnrollment);
-        // print_information(postPlayer2);
         // print_information(deletePlayer);
         // print_information(getPlayer);
         System.out.println("Started producing...");
-        for(int i = 0; i < 50; i++) {
-        
-            generateSequence(10);
-          
+        for(int i = 0; i < 5; i++) {
+
+            if(i == 3) {
+                optimistic = false;
+            }
+
+            generateSequence(1);
+
         }
         System.out.println("Finished producing...");
-        
+       
+
     }
 
     private void getStateOfData() {
@@ -229,9 +261,9 @@ public class BackTrackGraphV2 {
     }
 
     // This method will create the edges of the requires operation for our graph
-    private void createRequiresConnections() { 
+    private void createRequiresConnections() {
         Set<Operation> s = btg.vertexSet();
-       
+
 
         for(Operation o : s) {
             List<String> requires_list = o.getRequires();
@@ -240,14 +272,14 @@ public class BackTrackGraphV2 {
             if(aaa != null) {
                 Schema esquima = null;
                 //esquima = spec.dereferenceSchema((ReferencedBodySchema) o.getRequestBody());
-                esquima = spec.dereferenceSchema(((ReferencedBodySchema) o.getRequestBody()).getName()); 
-                
+                esquima = spec.dereferenceSchema(((ReferencedBodySchema) o.getRequestBody()).getName());
+
                 //System.out.println("Name : " +  esquima.getName() + " Type: " + esquima.getType());
-                
+
             }
 
             //System.out.println("------------------------------");
-           
+
             // if(esquima != null) {
             //     System.out.println("Name: " + esquima.getName() + " Type" + esquima.getType());
             // }
@@ -277,27 +309,27 @@ public class BackTrackGraphV2 {
 
                 }
                 else {
-                    
+
                     btg.addEdge(o,operationsURLs.get(pre) ,new RequiresEdge());
 
                 }
-             
+
             }
         }
-        
+
     }
 
     private void printPostBag() {
         postBag.forEach((key,value) -> {
             System.out.println(key.getOperationID() + value);
-            
+
         }
         );
     }
 
-   
-    
-    
+
+
+
     private void inferLinks_v3() {
 
         // Teve ficar desta forma por causa do erro : ConcurrentModificationException
@@ -305,7 +337,7 @@ public class BackTrackGraphV2 {
         // The links should be a different type of edge
         // For that I created two label classes
         // And we can use the instance of to differenciate them
-        
+
         Set<Operation> set = new HashSet<>(btg.vertexSet());
         Set<Operation> operationsToAdd = new HashSet<>();
         Set<Operation> operationsForTime = new HashSet<>();
@@ -328,8 +360,8 @@ public class BackTrackGraphV2 {
                     //System.out.println("I am adding a link with" + btg.getEdgeSource(e).getOperationID());
                     operationsForTime.add(btg.getEdgeSource(e));
                 }
-                
-            
+
+
             }
 
             for(Operation o_add : operationsToAdd) {
@@ -340,18 +372,18 @@ public class BackTrackGraphV2 {
                 for(Operation o_connect : operationsForTime) {
                     btg.addEdge(o_connect, o_add, new TimeEdge());
                     System.out.println("This is the edge that I added: " + o_connect.getOperationID() + " ---> " + o_add.getOperationID());
-                    
+
                     if(o_connect.getVerb().equals("POST")) {
                         btg.addEdge(o_add,o_connect,new YellowEdge());
                     }
-                    
+
                 }
             }
 
-           
+
             operationsForTime = new HashSet<>();
             operationsToAdd = new HashSet<>();
-               
+
         }
     }
 
@@ -378,7 +410,7 @@ public class BackTrackGraphV2 {
 
             if(red_edges_operations.size() > 1) {
 
-            
+
 
             // Now let's apply the transitivity rule for it
             List<Set<String>> sets = new LinkedList<>();
@@ -393,16 +425,16 @@ public class BackTrackGraphV2 {
 
             // Now let's check if we can traverse the edges
             for(String o_red : red_edges_operations) {
-                
+
                 Set<DefaultEdge> out_destination = btg.outgoingEdgesOf(operationIDS.get(o_red));
-             
+
                 // Out of these out_destionation edges we only want the red ones
                 // Let's see if it leads to another POSTs
                 Set<String> potencial_set = new HashSet<>();
 
                 for(DefaultEdge e_dest : out_destination) {
                     if(e_dest instanceof TimeEdge) {
-                        
+
                         potencial_set.add(btg.getEdgeTarget(e_dest).getOperationID());
                     }
                 }
@@ -410,9 +442,9 @@ public class BackTrackGraphV2 {
                 sets.add(potencial_set);
             }
 
-            
+
             Set<String> different_elements = my_method(sets);
-          
+
             toMaintain.put(o.getOperationID(), different_elements);
 
             // In different_elements we have the links that we have to maintain!
@@ -432,7 +464,7 @@ public class BackTrackGraphV2 {
 
             // Now for each of the red links let's remove some
             Set<String> set = toMaintain.get(o.getOperationID());
-       
+
             if(set != null) {
                 red_edges.removeAll(set);
                 for(String to_remove : red_edges) {
@@ -468,9 +500,9 @@ public class BackTrackGraphV2 {
             Operation o_source = btg.getEdgeSource(e);
             Operation o_target = btg.getEdgeTarget(e);
             // É um grafo direcionado
-            //System.out.println(btg.getEdge(o_source, o_target)); // esta existe 
+            //System.out.println(btg.getEdge(o_source, o_target)); // esta existe
             //System.out.println(btg.getEdge(o_target, o_source)); // esta nao existe e ele devolve null, é o correto
-            
+
             if(e instanceof SelfEdge)  {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am self edged");
 
@@ -493,7 +525,7 @@ public class BackTrackGraphV2 {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> " + o_target.getOperationID() + " and I am a requires edge");
 
             }
-        
+
         }
     }
 
@@ -501,19 +533,21 @@ public class BackTrackGraphV2 {
 
         List<Information> sequence = new LinkedList<>();
         for(int i = 0; i < nr_iterations; i++) {
-            Operation o = getRandomOperation();
-            // System.out.println("This is the random operation in question: " + o.getOperationID());
-            // System.out.println("This is the state of data");
-            // getStateOfData();
-            print_information(resolve(o,sequence));
+           
+                Operation o = getRandomOperation();
+                // System.out.println("This is the random operation in question: " + o.getOperationID());
+                // System.out.println("This is the state of data");
+                // getStateOfData();
+                print_information(resolve(o,sequence));
+            
         }
 
     }
 
     /**
-     * 
+     *
      * @param o - Operation received
-     * In this method we will just decide what to do with 
+     * In this method we will just decide what to do with
      * the choices that we have. We will detect wich
      * operation it is and perform logic into it
      * in order to append to the returnal list
@@ -541,7 +575,7 @@ public class BackTrackGraphV2 {
 
             default:
             System.out.println("I did not match any of the operation verbs available");
-            
+
         }
 
         return sequence;
@@ -568,48 +602,56 @@ public class BackTrackGraphV2 {
         for(Information info : history_list) {
             if(info.getStatus() == Status.AVAILABLE) {
                 toGet = info;
-                break;  
+                break;
             }
             position++;
         }
 
         if(toGet == null) {
-              
+
                 // This mean that there is no available operation to do that
                 // or simply the history_list is empty, this means
                 // that we will have to backtrack! We must
                 // create an enrollment in order to delete it!
 
-                // Now this cannot be that simples because in the new graph 
+                // Now this cannot be that simples because in the new graph
                 // we will have to explore until we reach "terminal" posts
                 Information append = new Information(o, Status.AVAILABLE,history_list.size()+1);
                 List<Operation> needed = needed(o); // This should work but we better test it
                 needed.remove(creator);
                 // check also the order of the things
-                List<Information> toReturn = backTrackPost(creator,needed);
+                List<Information> toReturn;
+                if(optimistic) {
+                    toReturn = backTrackPost(creator,needed);
+                    nr_of_backtracks++;
+                } else {
+                    toReturn = new LinkedList<>();
+                    stop = true;
+                }
 
                  for(Information info_update : toReturn) {
+                    System.out.println(info_update.getOperation().getOperationID());
                     List<Information> info_op = history.get(info_update.getOperation().getOperationID());
                     info_op.add(info_update);
                 }
 
                 toReturn.add(append);
-                
+
                 return toReturn;
-                
+
             } else {
 
                 // This means that there is an available one
                 // we do not need to backtrack
-                
+
                 // And we already know wich one to use! Update the history
                 Information info_to_get = history_list.get(position);
-                
+
                 Information to_return = new Information(o,Status.AVAILABLE,info_to_get.getCardinality());
                 List<Information> toReturn = List.of(to_return);
 
                 return toReturn;
-            }   
+            }
     }
 
     private List<Information> copeWithPut(Operation o, List<Information> seq) {
@@ -629,25 +671,32 @@ public class BackTrackGraphV2 {
         for(Information info : history_list) {
             if(info.getStatus() == Status.AVAILABLE) {
                 toUpdate = info;
-                break;  
+                break;
             }
             position++;
         }
 
         if(toUpdate == null) {
-              
+
                 // This mean that there is no available operation to do that
                 // or simply the history_list is empty, this means
                 // that we will have to backtrack! We must
                 // create an enrollment in order to delete it!
 
-                // Now this cannot be that simples because in the new graph 
+                // Now this cannot be that simples because in the new graph
                 // we will have to explore until we reach "terminal" posts
                 Information append = new Information(o, Status.AVAILABLE,history_list.size()+1);
                 List<Operation> needed = needed(o); // This should work but we better test it
                 needed.remove(creator);
                 // check also the order of the things
-                List<Information> toReturn = backTrackPost(creator,needed);
+                List<Information> toReturn;
+                if(optimistic) {
+                    toReturn = backTrackPost(creator,needed);
+                    nr_of_backtracks++;
+                } else {
+                    toReturn = new LinkedList<>();
+                    stop = true;
+                }
 
                  for(Information info_update : toReturn) {
                     List<Information> info_op = history.get(info_update.getOperation().getOperationID());
@@ -655,21 +704,21 @@ public class BackTrackGraphV2 {
                 }
 
                 toReturn.add(append);
-                
+
                 return toReturn;
-                
+
                  } else {
                 // This means that there is an available one
                 // we do not need to backtrack
-                
+
                 // And we already know wich one to use! Update the history
                 Information info_to_get = history_list.get(position);
-                
+
                 Information to_return = new Information(o,Status.AVAILABLE,info_to_get.getCardinality());
                 List<Information> toReturn = List.of(to_return);
 
                 return toReturn;
-            }   
+            }
     }
 
     private List<Information> copeWithDelete(Operation o, List<Information> seq) {
@@ -705,55 +754,61 @@ public class BackTrackGraphV2 {
             for(Information info : history_list) {
                 if(info.getStatus() == Status.AVAILABLE) {
                     toDelete = info;
-                    break;  
+                    break;
                 }
                 position++;
             }
 
             if(toDelete == null) {
-              
+
                 // This mean that there is no available operation to do that
                 // or simply the history_list is empty, this means
                 // that we will have to backtrack! We must
                 // create an enrollment in order to delete it!
 
-                // Now this cannot be that simples because in the new graph 
+                // Now this cannot be that simples because in the new graph
                 // we will have to explore until we reach "terminal" posts
 
                 List<Operation> needed = needed(o); // This should work but we better test it
-               
-                
-                // check also the order of the things
-                //System.out.println("I am backtracking");
-                List<Information> toReturn = backTrackDelete(o,needed);
-                
+                List<Information> toReturn;
+                if(optimistic) {
+                    toReturn = backTrackDelete(o,needed);
+                    nr_of_backtracks++;
+                } else {
+                    List<Information> list_root = history.get(getCreator(o).getOperationID());
+                    // Maybe if we adapt the backTrackPost we could re-use it here??!
+                    Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
+                    toReturn = List.of(i_root);
+                    stop = true;
+                }
+
                 return toReturn;
             } else {
                 // This means that there is an available one
                 // we do not need to backtrack
-                
+
                 // And we already know wich one to use! Update the history
-              
+
                 Information info_to_delete = history_list.get(position);
                 info_to_delete.setStatus(Status.UNAVAILABLE);
-         
+
                 Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality());
                 List<Information> toReturn = List.of(to_return);
 
-                
+
                 return toReturn;
-            }   
-            
+            }
+
         } else {
 
             // This means that this POST might create a cascade deletion!
             // Here the scenarios will be the same, if we don't have a POST
             // for this deletion then create one and this will never trigger
             // a cascade deletion
-           
+
             Operation creator = getCreator(o);
 
-            List<Information> history_list = history.get(creator.getOperationID()); 
+            List<Information> history_list = history.get(creator.getOperationID());
 
             Information toDelete = null;
             int position = 0;
@@ -761,13 +816,13 @@ public class BackTrackGraphV2 {
             for(Information info : history_list) {
                 if(info.getStatus() == Status.AVAILABLE) {
                     toDelete = info;
-                    break;  
+                    break;
                 }
                 position++;
             }
 
             if(toDelete == null) {
-              
+
                 // This mean that there is no available operation to do that
                 // or simply the history_list is empty, this means
                 // that we will have to backtrack! We must
@@ -776,9 +831,21 @@ public class BackTrackGraphV2 {
                 // When we backtrack we don't need to worry with the cascade deletion
 
                 List<Operation> needed = needed(o); // This should work but we better test it
-                List<Information> toReturn = backTrackDelete(o,needed);
-                
+                List<Information> toReturn;
+
+                if(optimistic) {
+                    toReturn = backTrackDelete(o,needed);
+                    nr_of_backtracks++;
+                } else {
+                    List<Information> list_root = history.get(getCreator(o).getOperationID());
+                    // Maybe if we adapt the backTrackPost we could re-use it here??!
+                    Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
+                    toReturn = List.of(i_root);
+                    stop = true;
+                }
+
                 return toReturn;
+
             } else {
                 // This means that there is an available one
                 // we do not need to backtrack
@@ -789,19 +856,19 @@ public class BackTrackGraphV2 {
                 //info_to_delete.setStatus(Status.UNAVAILABLE);
                 Information to_return = new Information(o,Status.UNAVAILABLE,info_to_delete.getCardinality()); // deleteX $.., this is the original delete
 
-              
+
                 // Now let's check for it's uses!
                 Operation uses = spreadCorruption(info_to_delete);
-             
+
                 info_to_delete.setStatus(Status.UNAVAILABLE);
 
                 // Now for the uses let's update the data structure and create the sequence!
                 List<Information> sequence = cascadeDelete(uses);
-                
+
                 sequence.add(to_return);
-              
+
                 return sequence;
-            }   
+            }
 
             // If we have an available one we should check for it's uses
             // and trigger a cascade deletion
@@ -811,8 +878,8 @@ public class BackTrackGraphV2 {
             // delete itself
 
         }
-        
-        
+
+
     }
 
     /**
@@ -826,7 +893,7 @@ public class BackTrackGraphV2 {
         // Let's just get the operation in question!
         List<Information> info_corrupted = history.get(o_corrupted.getOperationID());
         List<Information> toReturn = new LinkedList<>();
-        
+
         for(Information i : info_corrupted) {
             if(i.getStatus() == Status.CORRUPTED) {
                 i.setStatus(Status.UNAVAILABLE);
@@ -869,7 +936,7 @@ public class BackTrackGraphV2 {
                 return new Information(btg.getEdgeSource(e), Status.UNAVAILABLE, i.getCardinality());
             }
         }
-        return null;    
+        return null;
     }
 
     /**
@@ -907,7 +974,7 @@ public class BackTrackGraphV2 {
                     List<Information> arguments = i.getArguments();
                     if(arguments.contains(info_of_deletion)) {
                         // This means it will be corrupted so we need to delete it also!
-                   
+
                         i.setStatus(Status.CORRUPTED);
                         using_this.add(i);
                     }
@@ -922,7 +989,7 @@ public class BackTrackGraphV2 {
         // Let's create the deletes for them!
         // NOTE : in the future if this one uses it also
         // we should be able to cascade it further down!
-         
+
         // Now in yellow_connection we have the operation that might use this post
         // We will search into the history and check it's arguments and
         // if it is in there we decease the operation
@@ -936,7 +1003,7 @@ public class BackTrackGraphV2 {
      * Given an operation we want to traverse the graph until
      * we reach the creator. A post that created/has something
      * involved with what we are doing.
-     * 
+     *
      * @param o - the operation of whom we want the "creator"
      * @return - the creator of that operation
      */
@@ -960,7 +1027,7 @@ public class BackTrackGraphV2 {
 
         Stack<Operation> control = new Stack<>();
 
-        
+
         for(DefaultEdge e : edge_set) {
             if(e instanceof TimeEdge || e instanceof LinkEdge) {
                 Operation op = btg.getEdgeTarget(e);
@@ -990,7 +1057,7 @@ public class BackTrackGraphV2 {
         // Here we are receiving deletePlayer for instance, deletePlayer is our root!
         List<Information> toReturn = new LinkedList<>();
         Stack<Information> stack = new Stack<>();
-        
+
         List<Information> list_root = history.get(getCreator(root).getOperationID());
         // Maybe if we adapt the backTrackPost we could re-use it here??!
         Information i_root = new Information(root, Status.UNAVAILABLE, list_root.size()+1);
@@ -1006,7 +1073,7 @@ public class BackTrackGraphV2 {
         }
 
         Collections.reverse(backTrackedInfo); // we must do this cause if we don't we lose the effect of the stack
-        
+
         for(Information i : backTrackedInfo) {
             if(i.hasArguments()) {
                 List<Information> args = i.getArguments();
@@ -1022,7 +1089,7 @@ public class BackTrackGraphV2 {
             toReturn.add(stack.pop());
         }
 
-       
+
         return toReturn;
     }
 
@@ -1057,14 +1124,14 @@ public class BackTrackGraphV2 {
 
         if(list.isEmpty()) {
             // Primeira entrada de todas no algortimo
-         
+
             int cardinality = 1;
             Information i = new Information(o, status, cardinality);
             list.add(i);
             List<Information> toReturn = List.of(i);
             return toReturn;
         } else {
-          
+
             int index = list.size();
             Information last_info = list.get(index-1);
             Information i = new Information(o,status,last_info.getCardinality()+1);
@@ -1087,7 +1154,7 @@ public class BackTrackGraphV2 {
             // Let's get it's arguments, and in here we might have 2 scenarios
             // where we have the arguments and where we don't and need to backtrack
             List<Information> result = getValidArguments(o);
-            
+
 
             if(result != null) {
                 // Re-using existent ones
@@ -1101,25 +1168,36 @@ public class BackTrackGraphV2 {
             } else {
                 // We must backtrack
 
-                Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+                // Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
 
-                List<Operation> needed = new LinkedList<>();
-                for(DefaultEdge e : edge_set) {
-                    if(e instanceof TimeEdge) {
-                        Operation op = btg.getEdgeTarget(e);
-                        needed.add(op);
+                // List<Operation> needed = new LinkedList<>();
+                // for(DefaultEdge e : edge_set) {
+                //     if(e instanceof TimeEdge) {
+                //         Operation op = btg.getEdgeTarget(e);
+                //         needed.add(op);
+                //     }
+                // }
+
+                List<Operation> needed = needed(o);
+                List<Information> toReturn;
+                if(optimistic) {
+                    List<Information> backtracked = backTrackPost(o, needed);
+                    for(Information info_update : backtracked) {
+                        List<Information> info_op = history.get(info_update.getOperation().getOperationID());
+                        info_op.add(info_update);
                     }
+                    toReturn = backtracked;
+                    nr_of_backtracks++;
+                } else {
+                    Information new_info = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
+                    toReturn = List.of(new_info);
+                    stop = true;
                 }
-        
-                List<Information> backtracked = backTrackPost(o, needed);
-                for(Information info_update : backtracked) {
-                    List<Information> info_op = history.get(info_update.getOperation().getOperationID());
-                    info_op.add(info_update);
-                }
-                return backtracked; 
+               
+                return toReturn;
             }
 
-       
+
         } else {
 
             int index = list.size();
@@ -1127,8 +1205,8 @@ public class BackTrackGraphV2 {
             Information i = new Information(o,Status.AVAILABLE,last_info.getCardinality()+1);
 
             List<Information> result = getValidArguments(o);
-          
-            
+
+
             if(result != null) {
 
                 // Re-using existent ones
@@ -1142,23 +1220,32 @@ public class BackTrackGraphV2 {
             } else {
                 // We must backtrack
 
-                Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+                // Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
 
-                List<Operation> needed = new LinkedList<>();
-                for(DefaultEdge e : edge_set) {
-                    if(e instanceof TimeEdge) {
-                        Operation op = btg.getEdgeTarget(e);
-                        needed.add(op);
+                // List<Operation> needed = new LinkedList<>();
+                // for(DefaultEdge e : edge_set) {
+                //     if(e instanceof TimeEdge) {
+                //         Operation op = btg.getEdgeTarget(e);
+                //         needed.add(op);
+                //     }
+                // }
+
+                List<Operation> needed = needed(o);
+                List<Information> toReturn;
+                if(optimistic) {
+                    List<Information> backtracked = backTrackPost(o, needed);
+                    for(Information info_update : backtracked) {
+                        List<Information> info_op = history.get(info_update.getOperation().getOperationID());
+                        info_op.add(info_update);
                     }
+                    toReturn = backtracked;
+                    nr_of_backtracks++;
+                } else {
+                    Information new_info = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
+                    toReturn = List.of(new_info);
+                    stop = true;
                 }
-
-            
-                List<Information> backtracked = backTrackPost(o, needed);
-                for(Information info_update : backtracked) {
-                    List<Information> info_op = history.get(info_update.getOperation().getOperationID());
-                    info_op.add(info_update);
-                }
-                return backtracked; 
+                return toReturn;
             }
         }
 
@@ -1176,7 +1263,7 @@ public class BackTrackGraphV2 {
         //     }
         // }
         List<Operation> needed = needed(o);
-        
+
         // Now by having them let's run our new method that creates the combinatory for use
         List<Information> possibility = getPossibility(needed,o);
         //System.out.println(possibility.size());
@@ -1210,30 +1297,30 @@ public class BackTrackGraphV2 {
             generated_possibilities.add(to_generate);
         }
 
-        
+
 
 
         List<List<Information>> result = generateCombinations(generated_possibilities);
 
-      
+
         // Since we are selecting all of them now we need to extra check if they all are available
         // Em principio nunca estarao aqui unavailable porque eu mandarei eles pra tomb stone
         // Portanto vamos ignorar este passo
 
         // Given the combinatory let's check if there isn't already an enrollment with
-        // that combination 
+        // that combination
         List<Information> my_list = history.get(o.getOperationID());
 
-      
+
 
         for(List<Information> list : result) {
             int counter = 0;
             for(Information i : my_list) {
                 if(!i.hasTheSameArguments(list) || (i.getStatus() == Status.UNAVAILABLE && i.hasTheSameArguments(list))) {
                     counter++;
-                }   
+                }
             }
-            
+
             if(counter == my_list.size()) {
                 // This means the combination is applicable, is a valid one to use
                 return list;
@@ -1279,7 +1366,7 @@ public class BackTrackGraphV2 {
         // We already know the operations that we have to back-track
         // Let's change this method to be able to be used in
         // simple posts and compound posts!
-        
+
         Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(root);
         boolean simple = true;
         for(DefaultEdge e : edge_set) {
@@ -1290,13 +1377,13 @@ public class BackTrackGraphV2 {
         }
 
         List<Information> toReturn = new LinkedList<>();
-    
+
         // I had to do this in order for the delete to work
         if(simple) {
             Information new_info = new Information(root,Status.AVAILABLE,history.get(root.getOperationID()).size()+1);
             toReturn = List.of(new_info);
         }
-       
+
         else {
 
             Stack<Information> stack = new Stack<>();
@@ -1318,7 +1405,7 @@ public class BackTrackGraphV2 {
             while(!stack.isEmpty()) {
                 toReturn.add(stack.pop());
             }
-            
+
         }
 
         List<Information> l = new ArrayList<>(toReturn); // weird but ok, fixed UnsupportedOperation lmao
@@ -1348,7 +1435,7 @@ public class BackTrackGraphV2 {
         return result;
 
     }
-    
+
     public void countTest() {
 
         Operation o4 = operationsURLs.get("(DELETE /tournaments/{tournamentId}/enrollments/{playerNIF})");
@@ -1393,7 +1480,7 @@ public class BackTrackGraphV2 {
             for(DefaultEdge e : edge_set) {
                 if(e instanceof TimeEdge || e instanceof SelfEdge) {
                     Operation op = btg.getEdgeTarget(e);
-                    
+
                     int neighbour_edge_degree = btg.outDegreeOf(op);
 
                     if(neighbour_edge_degree > 1) {
@@ -1402,7 +1489,7 @@ public class BackTrackGraphV2 {
                         returnal.push(null);
 
                     }
-                    
+
                 }
             }
 
@@ -1424,7 +1511,7 @@ public class BackTrackGraphV2 {
         // With this we will be able to get
         // a random element from the array
         // Random rnd = new Random();
-        
+
         //Stack<ReturnInfo> stack_information = new Stack<>();
         // int rndNumber = rnd.nextInt(bag.length);
         Operation o = getRandomOperation();
@@ -1448,13 +1535,13 @@ public class BackTrackGraphV2 {
                     stack_control.add(key);
                     set_control.add(key);
                 }
-                
+
             });
         }
 
 
         List<Operation> sequence = new LinkedList<>();
-        
+
         //System.out.println("I will be stuck here");
         while(!stack_return.isEmpty()) {
             sequence.add(stack_return.pop());
@@ -1463,7 +1550,7 @@ public class BackTrackGraphV2 {
         // while(!stack_information.isEmpty()) {
         //     toReturn.add(stack_information.pop());
         // }
-        
+
         for(Operation op : sequence) {
             ReturnInfo r = generateMultipleSequenceV2(op);
             toReturn.add(r);
@@ -1499,11 +1586,11 @@ public class BackTrackGraphV2 {
         list.add(generateMultipleSequence(o33));
 
         for(ReturnInfo i : list) {
-     
+
             Operation to_print = i.getOperation();
             Map<Operation,Integer> m = i.getCardinalities();
-        
-       
+
+
         }
 
     }
@@ -1527,11 +1614,11 @@ public class BackTrackGraphV2 {
         // toReturn.add(generateMultipleSequenceV2(o22));
         // toReturn.add(generateMultipleSequenceV2(o3));
         toReturn.add(generateMultipleSequenceV2(o4));
-        
+
 
         for(ReturnInfo i : toReturn) {
-         
-           
+
+
         Map<Operation,Integer> options = i.getCardinalities();
 
         }
@@ -1554,7 +1641,7 @@ public class BackTrackGraphV2 {
             Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
 
             for(DefaultEdge e : edge_set) {
-                
+
                 Operation op = btg.getEdgeTarget(e);
                 if(!(e instanceof SelfEdge) && !(e instanceof RequiresEdge)) {
                     // In this example only postEnrollment will enter here
@@ -1573,7 +1660,7 @@ public class BackTrackGraphV2 {
                     }
 
                 }
-                
+
             }
 
             // In the end of this we will have a postEnrollmentReturnInfo with
@@ -1595,7 +1682,7 @@ public class BackTrackGraphV2 {
             for(DefaultEdge e : edge_set) {
                 if(e instanceof TimeEdge) {
                     Operation op = btg.getEdgeTarget(e);
-                    
+
                     Set<DefaultEdge> neighbour_edge_set = btg.outgoingEdgesOf(op); // TODO: maybe the degree might work just fine
                     for(DefaultEdge ee : neighbour_edge_set) {
                         if(ee instanceof TimeEdge){
@@ -1625,7 +1712,7 @@ public class BackTrackGraphV2 {
                     // If it is null this means that we are in the beginning of everything!
                     //int c_of_timed = postBag.get(timed_operation);
                     //r.addCardinality(o, c_of_timed++);
-                 
+
                 }
 
                 r.setOperationCardinality(c);
@@ -1634,7 +1721,7 @@ public class BackTrackGraphV2 {
                 options.forEach((key,value) -> {
                     r.addCardinality(key, value);
                 }
-                );  
+                );
             } else {
                 for(DefaultEdge e : edge_set) {
                     if(!(e instanceof SelfEdge) && !(e instanceof RequiresEdge)) {
@@ -1682,42 +1769,42 @@ public class BackTrackGraphV2 {
             postBag.put(o, cardinality);
             information.addCardinality(o,cardinality);
         }
-       
+
         // Now check if we have red links "this means we have arguments to feed our operation"
         Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
-        
+
         Map<Operation,Integer> options = new HashMap<>();
-      
+
         for(DefaultEdge e : edge_set) {
             Operation op = btg.getEdgeTarget(e);
             //System.out.println("This is my target: " + op.getOperationID());
-         
+
             if(!(e instanceof SelfEdge) && !(e instanceof RequiresEdge)) {
-                
+
                 int c = postBag.get(op);
                 if(!(postBag.containsKey(op))) { // caso nao queiramos criar novos cardinais!
                     c++; // ele no postEnrollment incrementa os valores no postPlayer e postTournament
-                    // isto é aquele problema do arcos vermelhos que eu nao queria aqui!  
+                    // isto é aquele problema do arcos vermelhos que eu nao queria aqui!
                 }
 
                 options.put(op,c);
-                
+
             }
-            
+
         }
 
 
         // Now for each argument we want to generate a valid random number
-        
+
         options.forEach((key,value) -> {
-       
+
             // se for zero entao o unico valor possivel será 1
             // entre 0 e value - 1 original
             // com +1 será entre 1 e value! é o que queremos
             int rnd = new Random().nextInt(value) + 1;
             information.addCardinality(key, rnd);
-           
-            
+
+
         }
         );
 
@@ -1759,7 +1846,7 @@ public class BackTrackGraphV2 {
                 // String with the information of "response_code" but
                 // for now it will be like this
                 String sub_string = s.substring(13); // magic number
-                
+
                 // I want to remove the information in the String until ==
                 String[] raw = sub_string.split("==");
                 parsed_requires.add(raw[0].trim());
@@ -1776,7 +1863,7 @@ public class BackTrackGraphV2 {
         for(String s : ensures) {
             if(s.contains("GET")) {
                 String sub_string = s.substring(13); // magic number
-                
+
                 // I want to remove the information in the String until ==
                 String[] raw = sub_string.split("==");
                 String[] remove_request_body = raw[0].split("request_body\\(this\\)");
