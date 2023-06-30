@@ -149,9 +149,19 @@ public class BackTrackGraphV2 {
         applyTransitiveFilter();
 
         // List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        // List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
+        // List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
         // List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
-        //List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
+        // getStateOfData();
+        // System.out.println("AAAAAAAAAAAAAA");
+        // //List<Information> deleteEnrollment = resolve(operationIDS.get("deleteEnrollment"), new LinkedList<>());
+        // getStateOfData();
+        // List<Information> postEnrollment2 = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
+        // print_information(postPlayer);
+        // print_information(postTournament);
+        // print_information(postEnrollment);
+        // // print_information(deleteEnrollment);
+        // print_information(postEnrollment2); // it should re-use the player and tournament
+
         // List<Information> postPlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
         // System.out.println("State of data");
         // getStateOfData();
@@ -176,7 +186,7 @@ public class BackTrackGraphV2 {
         // print_information(postPlayer2);
         // print_information(deletePlayer);
         // print_information(getPlayer);
-        for(int i = 0; i < 1000; i++) {
+        for(int i = 0; i < 50; i++) {
             System.out.println("Started producing...");
             generateSequence(10);
             System.out.println("Finished producing...");
@@ -712,7 +722,7 @@ public class BackTrackGraphV2 {
                
                 
                 // check also the order of the things
-                
+                //System.out.println("I am backtracking");
                 List<Information> toReturn = backTrackDelete(o,needed);
                 
                 return toReturn;
@@ -1115,6 +1125,7 @@ public class BackTrackGraphV2 {
             Information i = new Information(o,Status.AVAILABLE,last_info.getCardinality()+1);
 
             List<Information> result = getValidArguments(o);
+            System.out.println("Valid arguments are: " + result);
             
             if(result != null) {
 
@@ -1153,17 +1164,17 @@ public class BackTrackGraphV2 {
 
     private List<Information> getValidArguments(Operation o) {
         // We are getting the operations needed for this execution to proceed
-        Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
+        //Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
 
-        List<Operation> needed = new LinkedList<>();
-        for(DefaultEdge e : edge_set) {
-            if(e instanceof TimeEdge) {
-                Operation op = btg.getEdgeTarget(e);
-                needed.add(op);
-            }
-        }
+        // List<Operation> needed = new LinkedList<>();
+        // for(DefaultEdge e : edge_set) {
+        //     if(e instanceof TimeEdge) {
+        //         Operation op = btg.getEdgeTarget(e);
+        //         needed.add(op);
+        //     }
+        // }
+        List<Operation> needed = needed(o);
         
-
         // Now by having them let's run our new method that creates the combinatory for use
         List<Information> possibility = getPossibility(needed,o);
         //System.out.println(possibility.size());
@@ -1202,7 +1213,12 @@ public class BackTrackGraphV2 {
 
         List<List<Information>> result = generateCombinations(generated_possibilities);
 
-
+        System.out.println("Bankai!");
+        for(List<Information> inf : result) {
+            for(Information ii : inf) {
+                System.out.println(ii.getOperation().getOperationID() + ii.getCardinality());
+            }
+        }
         // Since we are selecting all of them now we need to extra check if they all are available
         // Em principio nunca estarao aqui unavailable porque eu mandarei eles pra tomb stone
         // Portanto vamos ignorar este passo
@@ -1216,7 +1232,10 @@ public class BackTrackGraphV2 {
         for(List<Information> list : result) {
             int counter = 0;
             for(Information i : my_list) {
-                if(!i.hasTheSameArguments(list)) {
+                System.out.println(i.hasTheSameArguments(list));
+                System.out.println();
+                System.out.println();
+                if(!i.hasTheSameArguments(list) || (i.getStatus() == Status.UNAVAILABLE && i.hasTheSameArguments(list))) {
                     counter++;
                 }   
             }
