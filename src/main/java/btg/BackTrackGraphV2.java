@@ -186,11 +186,13 @@ public class BackTrackGraphV2 {
         // print_information(postPlayer2);
         // print_information(deletePlayer);
         // print_information(getPlayer);
+        System.out.println("Started producing...");
         for(int i = 0; i < 50; i++) {
-            System.out.println("Started producing...");
+        
             generateSequence(10);
-            System.out.println("Finished producing...");
+          
         }
+        System.out.println("Finished producing...");
         
     }
 
@@ -1125,7 +1127,7 @@ public class BackTrackGraphV2 {
             Information i = new Information(o,Status.AVAILABLE,last_info.getCardinality()+1);
 
             List<Information> result = getValidArguments(o);
-            System.out.println("Valid arguments are: " + result);
+          
             
             if(result != null) {
 
@@ -1213,12 +1215,7 @@ public class BackTrackGraphV2 {
 
         List<List<Information>> result = generateCombinations(generated_possibilities);
 
-        System.out.println("Bankai!");
-        for(List<Information> inf : result) {
-            for(Information ii : inf) {
-                System.out.println(ii.getOperation().getOperationID() + ii.getCardinality());
-            }
-        }
+      
         // Since we are selecting all of them now we need to extra check if they all are available
         // Em principio nunca estarao aqui unavailable porque eu mandarei eles pra tomb stone
         // Portanto vamos ignorar este passo
@@ -1232,9 +1229,6 @@ public class BackTrackGraphV2 {
         for(List<Information> list : result) {
             int counter = 0;
             for(Information i : my_list) {
-                System.out.println(i.hasTheSameArguments(list));
-                System.out.println();
-                System.out.println();
                 if(!i.hasTheSameArguments(list) || (i.getStatus() == Status.UNAVAILABLE && i.hasTheSameArguments(list))) {
                     counter++;
                 }   
