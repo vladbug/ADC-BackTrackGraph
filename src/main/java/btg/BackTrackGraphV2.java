@@ -114,7 +114,7 @@ public class BackTrackGraphV2 {
 
     private int nr_of_backtracks;
 
-    public BackTrackGraphV2(Map<String, Operation> operations) {
+    public BackTrackGraphV2(Map<String, Operation> operations,boolean option) {
 
         btg = new DefaultDirectedGraph<>(null, null, false);
         operationsURLs = new HashMap<>(100);
@@ -125,8 +125,7 @@ public class BackTrackGraphV2 {
         operationVerbs = new HashMap<>(100);
         history = new HashMap<>(100);
         tombstone = new LinkedList<>();
-        optimistic = true;
-        stop = false;
+        optimistic = option;
         threshold = 1;
         nr_of_backtracks = 0;
 
@@ -213,17 +212,7 @@ public class BackTrackGraphV2 {
 
         // print_information(deletePlayer);
         // print_information(getPlayer);
-        System.out.println("Started producing...");
-        for(int i = 0; i < 5; i++) {
-
-            if(i == 3) {
-                optimistic = false;
-            }
-
-            generateSequence(1);
-
-        }
-        System.out.println("Finished producing...");
+        generateSequence(50);
        
 
     }
@@ -532,12 +521,13 @@ public class BackTrackGraphV2 {
     public void generateSequence(int nr_iterations) {
 
         List<Information> sequence = new LinkedList<>();
+
         for(int i = 0; i < nr_iterations; i++) {
-           
+                if(stop) {
+                    break;
+                }
                 Operation o = getRandomOperation();
-                // System.out.println("This is the random operation in question: " + o.getOperationID());
-                // System.out.println("This is the state of data");
-                // getStateOfData();
+                System.out.println("Random op selected: " + o.getOperationID());
                 print_information(resolve(o,sequence));
             
         }
@@ -616,20 +606,27 @@ public class BackTrackGraphV2 {
 
                 // Now this cannot be that simples because in the new graph
                 // we will have to explore until we reach "terminal" posts
+
                 Information append = new Information(o, Status.AVAILABLE,history_list.size()+1);
                 List<Operation> needed = needed(o); // This should work but we better test it
                 needed.remove(creator);
                 // check also the order of the things
                 List<Information> toReturn;
+
                 if(optimistic) {
                     toReturn = backTrackPost(creator,needed);
-                    nr_of_backtracks++;
                 } else {
-                    toReturn = new LinkedList<>();
-                    stop = true;
+                    // The option given is to create non-optimistic sequences
+                    if(nr_of_backtracks < threshold) {
+                        toReturn = backTrackPost(creator,needed);
+                        nr_of_backtracks++;
+                    } else {
+                        toReturn = new LinkedList<>();
+                        stop = true;
+                    }
                 }
 
-                 for(Information info_update : toReturn) {
+                for(Information info_update : toReturn) {
                     System.out.println(info_update.getOperation().getOperationID());
                     List<Information> info_op = history.get(info_update.getOperation().getOperationID());
                     info_op.add(info_update);
@@ -690,12 +687,18 @@ public class BackTrackGraphV2 {
                 needed.remove(creator);
                 // check also the order of the things
                 List<Information> toReturn;
+
                 if(optimistic) {
                     toReturn = backTrackPost(creator,needed);
-                    nr_of_backtracks++;
                 } else {
-                    toReturn = new LinkedList<>();
-                    stop = true;
+                    // The option given is to create non-optimistic sequences
+                    if(nr_of_backtracks < threshold) {
+                        toReturn = backTrackPost(creator,needed);
+                        nr_of_backtracks++;
+                    } else {
+                        toReturn = new LinkedList<>();
+                        stop = true;
+                    }
                 }
 
                  for(Information info_update : toReturn) {
@@ -771,15 +774,23 @@ public class BackTrackGraphV2 {
 
                 List<Operation> needed = needed(o); // This should work but we better test it
                 List<Information> toReturn;
+
+                
                 if(optimistic) {
                     toReturn = backTrackDelete(o,needed);
-                    nr_of_backtracks++;
+                    
                 } else {
-                    List<Information> list_root = history.get(getCreator(o).getOperationID());
-                    // Maybe if we adapt the backTrackPost we could re-use it here??!
-                    Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
-                    toReturn = List.of(i_root);
-                    stop = true;
+                    if(nr_of_backtracks < threshold) {
+                        toReturn = backTrackDelete(o,needed);
+                        nr_of_backtracks++;
+                    } else {
+                        List<Information> list_root = history.get(getCreator(o).getOperationID());
+                        // Maybe if we adapt the backTrackPost we could re-use it here??!
+                        Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
+                        toReturn = List.of(i_root);
+                        stop = true;
+                    }
+                
                 }
 
                 return toReturn;
@@ -835,13 +846,18 @@ public class BackTrackGraphV2 {
 
                 if(optimistic) {
                     toReturn = backTrackDelete(o,needed);
-                    nr_of_backtracks++;
                 } else {
-                    List<Information> list_root = history.get(getCreator(o).getOperationID());
-                    // Maybe if we adapt the backTrackPost we could re-use it here??!
-                    Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
-                    toReturn = List.of(i_root);
-                    stop = true;
+                    if(nr_of_backtracks < threshold) {
+                        toReturn = backTrackDelete(o,needed);
+                        nr_of_backtracks++;
+                    } else {
+                        List<Information> list_root = history.get(getCreator(o).getOperationID());
+                        // Maybe if we adapt the backTrackPost we could re-use it here??!
+                        Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
+                        toReturn = List.of(i_root);
+                        stop = true;
+                    }
+                    
                 }
 
                 return toReturn;
@@ -870,12 +886,6 @@ public class BackTrackGraphV2 {
                 return sequence;
             }
 
-            // If we have an available one we should check for it's uses
-            // and trigger a cascade deletion
-
-            // checkForUses()
-            // if has uses delete them
-            // delete itself
 
         }
 
@@ -1181,17 +1191,27 @@ public class BackTrackGraphV2 {
                 List<Operation> needed = needed(o);
                 List<Information> toReturn;
                 if(optimistic) {
+
                     List<Information> backtracked = backTrackPost(o, needed);
                     for(Information info_update : backtracked) {
                         List<Information> info_op = history.get(info_update.getOperation().getOperationID());
                         info_op.add(info_update);
                     }
                     toReturn = backtracked;
-                    nr_of_backtracks++;
                 } else {
-                    Information new_info = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
-                    toReturn = List.of(new_info);
-                    stop = true;
+                    if(nr_of_backtracks < threshold) {
+                        List<Information> backtracked = backTrackPost(o, needed);
+                        for(Information info_update : backtracked) {
+                            List<Information> info_op = history.get(info_update.getOperation().getOperationID());
+                            info_op.add(info_update);
+                        }
+                        toReturn = backtracked;
+                        nr_of_backtracks++;
+                    } else {
+                        Information new_info = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
+                        toReturn = List.of(new_info);
+                        stop = true;
+                    }
                 }
                
                 return toReturn;
@@ -1239,11 +1259,21 @@ public class BackTrackGraphV2 {
                         info_op.add(info_update);
                     }
                     toReturn = backtracked;
-                    nr_of_backtracks++;
+                 
                 } else {
-                    Information new_info = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
-                    toReturn = List.of(new_info);
-                    stop = true;
+                    if(nr_of_backtracks < threshold) {
+                         List<Information> backtracked = backTrackPost(o, needed);
+                        for(Information info_update : backtracked) {
+                            List<Information> info_op = history.get(info_update.getOperation().getOperationID());
+                            info_op.add(info_update);
+                        }
+                        toReturn = backtracked;
+                        nr_of_backtracks++;
+                    } else {
+                        Information new_info = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
+                        toReturn = List.of(new_info);
+                        stop = true;
+                    }
                 }
                 return toReturn;
             }

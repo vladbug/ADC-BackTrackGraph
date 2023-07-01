@@ -21,7 +21,7 @@ public class Main {
         
         // Creating standard operation dependency graph
         //OperationDependencyGraph odg = new OperationDependencyGraph(spec.getOperations());
-        BackTrackGraphV2 btg = new BackTrackGraphV2(spec.getOperations());
+        BackTrackGraphV2 btg = new BackTrackGraphV2(spec.getOperations(),false);
         //btg.iterateAllEdges();
         //btg.inferAllLinks();
         
