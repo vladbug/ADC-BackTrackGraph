@@ -67,6 +67,11 @@ public class BackTrackGraphV2 {
     private Map<Operation,Integer> postBag;
 
     /**
+     * Trick
+     */
+    private List<String> postBagV2;
+
+    /**
      * This is the new version of the postBag
      * It is more advanced and has a lot more information
      * I'm gonna name it : history
@@ -114,7 +119,7 @@ public class BackTrackGraphV2 {
 
     private int nr_of_backtracks;
 
-    public BackTrackGraphV2(Map<String, Operation> operations,boolean option) {
+    public BackTrackGraphV2(Map<String, Operation> operations,boolean option,int it_number,int nr_different_test) {
 
         btg = new DefaultDirectedGraph<>(null, null, false);
         operationsURLs = new HashMap<>(100);
@@ -125,8 +130,9 @@ public class BackTrackGraphV2 {
         operationVerbs = new HashMap<>(100);
         history = new HashMap<>(100);
         tombstone = new LinkedList<>();
+        postBagV2 = new LinkedList<>();
         optimistic = option;
-        threshold = 2;
+        threshold = 1;
         nr_of_backtracks = 0;
 
         // And now for each one we will the create the map within itself
@@ -159,8 +165,12 @@ public class BackTrackGraphV2 {
         applyTransitiveFilter();
 
        
-        //List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
+        // List<Information> updateTournament = resolve(operationIDS.get("updateTournament"), new LinkedList<>());
+        // List<Information> deleteTournament = resolve(operationIDS.get("deleteTournament"), new LinkedList<>());
         // List<Information> getEnrollments = resolve(operationIDS.get("getTournamentEnrollments"), new LinkedList<>());
+        // List<Information> checkEnrollment = resolve(operationIDS.get("checkEnrollment"), new LinkedList<>());
+        // List<Information> checkEnrollment2 = resolve(operationIDS.get("checkEnrollment"), new LinkedList<>());
+
         // List<Information> getTournaments = resolve(operationIDS.get("getTournaments"), new LinkedList<>());
         //List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
         // List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
@@ -200,9 +210,10 @@ public class BackTrackGraphV2 {
         // System.out.println("*****************");
         // System.out.println("################");
         
-        //print_information(postTournament);
+        // print_information(updateTournament);
+        // print_information(deleteTournament);
         // print_information(getEnrollments);
-        // print_information(getTournaments);
+
         // print_information(postPlayer);
         // print_information(deleteEnrollment);
         // print_information(deletePlayer);
@@ -212,9 +223,18 @@ public class BackTrackGraphV2 {
 
         // print_information(deletePlayer);
         // print_information(getPlayer);
-        generateSequence(50);
+        for(int i = 0; i < nr_different_test;i++) {
+            System.out.println("Test number #" + (i+1));
+            generateSequence(it_number);
+            // Wipe information for next test
+            history = new HashMap<>(100);
+            for(String s : postBagV2) {
+                history.put(s,new LinkedList<>());
+            }
+            nr_of_backtracks = 0;
+            stop = false;
+        }
        
-
     }
 
     private void getStateOfData() {
@@ -291,6 +311,7 @@ public class BackTrackGraphV2 {
                         btg.addEdge(o,operationsURLs.get(new_pre) , new SelfEdge());
 
                         history.put(o.getOperationID(),new LinkedList<>());
+                        postBagV2.add(o.getOperationID());
 
                     }
 
@@ -620,21 +641,22 @@ public class BackTrackGraphV2 {
                     if(nr_of_backtracks < threshold) {
                         toReturn = backTrackPost(creator,needed);
                         nr_of_backtracks++;
+                        
                     } else {
                         toReturn = new LinkedList<>();
+                        append.setStatus(Status.NEGATIVE);
                         stop = true;
+
                     }
                 }
 
                 for(Information info_update : toReturn) {
-                    System.out.println(info_update.getOperation().getOperationID());
+                    //System.out.println(info_update.getOperation().getOperationID());
                     List<Information> info_op = history.get(info_update.getOperation().getOperationID());
                     info_op.add(info_update);
                 }
 
-                if(!optimistic && nr_of_backtracks >= threshold) {
-                    append.setStatus(Status.NEGATIVE);
-                }
+              
                 toReturn.add(append);
 
                 return toReturn;
@@ -700,6 +722,7 @@ public class BackTrackGraphV2 {
                         nr_of_backtracks++;
                     } else {
                         toReturn = new LinkedList<>();
+                        append.setStatus(Status.NEGATIVE);
                         stop = true;
                     }
                 }
@@ -711,9 +734,7 @@ public class BackTrackGraphV2 {
                     info_op.add(info_update);
                 }
 
-                if(!optimistic && nr_of_backtracks >= threshold) {
-                    append.setStatus(Status.NEGATIVE);
-                }
+               
 
                 toReturn.add(append);
 

@@ -13,6 +13,9 @@ import java.util.List;
 import btg.BackTrackGraph;
 import btg.BackTrackGraphV2;
 
+import java.time.Duration;
+import java.time.Instant;
+
 public class Main {
 
     public static void main(String[] args) throws FileNotFoundException, VertexDoesNotExistException {
@@ -21,7 +24,17 @@ public class Main {
         
         // Creating standard operation dependency graph
         //OperationDependencyGraph odg = new OperationDependencyGraph(spec.getOperations());
-        BackTrackGraphV2 btg = new BackTrackGraphV2(spec.getOperations(),false);
+        Instant start = Instant.now();
+        BackTrackGraphV2 btg = new BackTrackGraphV2(spec.getOperations(),false,10,10);
+        Instant end = Instant.now();
+        long time = Duration.between(start, end).toMillis();
+        long milliseconds = time;
+        long minutes = (milliseconds / 1000) / 60;
+        long seconds = (milliseconds / 1000) % 60;
+        System.out.println();
+        System.out.println(milliseconds + " Milliseconds = "
+                           + minutes + " minutes and "
+                           + seconds + " seconds.");
         //btg.iterateAllEdges();
         //btg.inferAllLinks();
         
