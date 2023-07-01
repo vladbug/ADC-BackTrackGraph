@@ -126,7 +126,7 @@ public class BackTrackGraphV2 {
         history = new HashMap<>(100);
         tombstone = new LinkedList<>();
         optimistic = option;
-        threshold = 1;
+        threshold = 2;
         nr_of_backtracks = 0;
 
         // And now for each one we will the create the map within itself
@@ -632,6 +632,9 @@ public class BackTrackGraphV2 {
                     info_op.add(info_update);
                 }
 
+                if(!optimistic && nr_of_backtracks >= threshold) {
+                    append.setStatus(Status.NEGATIVE);
+                }
                 toReturn.add(append);
 
                 return toReturn;
@@ -701,9 +704,15 @@ public class BackTrackGraphV2 {
                     }
                 }
 
+                
+
                  for(Information info_update : toReturn) {
                     List<Information> info_op = history.get(info_update.getOperation().getOperationID());
                     info_op.add(info_update);
+                }
+
+                if(!optimistic && nr_of_backtracks >= threshold) {
+                    append.setStatus(Status.NEGATIVE);
                 }
 
                 toReturn.add(append);
@@ -786,7 +795,7 @@ public class BackTrackGraphV2 {
                     } else {
                         List<Information> list_root = history.get(getCreator(o).getOperationID());
                         // Maybe if we adapt the backTrackPost we could re-use it here??!
-                        Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
+                        Information i_root = new Information(o, Status.NEGATIVE, list_root.size()+1);
                         toReturn = List.of(i_root);
                         stop = true;
                     }
@@ -853,7 +862,7 @@ public class BackTrackGraphV2 {
                     } else {
                         List<Information> list_root = history.get(getCreator(o).getOperationID());
                         // Maybe if we adapt the backTrackPost we could re-use it here??!
-                        Information i_root = new Information(o, Status.AVAILABLE, list_root.size()+1);
+                        Information i_root = new Information(o, Status.NEGATIVE, list_root.size()+1);
                         toReturn = List.of(i_root);
                         stop = true;
                     }
@@ -1208,7 +1217,7 @@ public class BackTrackGraphV2 {
                         toReturn = backtracked;
                         nr_of_backtracks++;
                     } else {
-                        Information new_info = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
+                        Information new_info = new Information(o,Status.NEGATIVE,history.get(o.getOperationID()).size()+1);
                         toReturn = List.of(new_info);
                         stop = true;
                     }
@@ -1270,7 +1279,7 @@ public class BackTrackGraphV2 {
                         toReturn = backtracked;
                         nr_of_backtracks++;
                     } else {
-                        Information new_info = new Information(o,Status.AVAILABLE,history.get(o.getOperationID()).size()+1);
+                        Information new_info = new Information(o,Status.NEGATIVE,history.get(o.getOperationID()).size()+1);
                         toReturn = List.of(new_info);
                         stop = true;
                     }
