@@ -25,7 +25,7 @@ public class Main {
         // Creating standard operation dependency graph
         //OperationDependencyGraph odg = new OperationDependencyGraph(spec.getOperations());
         Instant start = Instant.now();
-        BackTrackGraphV2 btg = new BackTrackGraphV2(spec.getOperations(),false,10,10);
+        BackTrackGraphV2 btg = new BackTrackGraphV2(spec.getOperations(),true,8,500000);
         Instant end = Instant.now();
         long time = Duration.between(start, end).toMillis();
         long milliseconds = time;
@@ -35,13 +35,22 @@ public class Main {
         System.out.println(milliseconds + " Milliseconds = "
                            + minutes + " minutes and "
                            + seconds + " seconds.");
-        //btg.iterateAllEdges();
-        //btg.inferAllLinks();
+        // btg.iterateAllEdges();
         
-        // // Generating all topological sorts used for nominal test cases
+        // Generating all topological sorts used for nominal test cases
+        // Instant start = Instant.now();
         // System.out.println("\n********* SORTS FOR NOMINAL TESTS *********\n");
         // List<List<String>> sorts = odg.topologicalSorts();
         // print_sorts(sorts);
+        // Instant end = Instant.now();
+        // long time = Duration.between(start, end).toMillis();
+        // long milliseconds = time;
+        // long minutes = (milliseconds / 1000) / 60;
+        // long seconds = (milliseconds / 1000) % 60;
+        // System.out.println();
+        // System.out.println(milliseconds + " Milliseconds = "
+        //                    + minutes + " minutes and "
+        //                    + seconds + " seconds.");
 
         // // Generating all topological sorts used for error test cases
         // System.out.println("\n********* SORTS FOR ERROR TESTS *********\n");
@@ -89,5 +98,6 @@ public class Main {
         ss = ss.concat("}");
 
         System.out.println(ss);
+        System.out.println("a");
     }
 }

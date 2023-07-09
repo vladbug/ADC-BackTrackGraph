@@ -165,19 +165,18 @@ public class BackTrackGraphV2 {
         applyTransitiveFilter();
 
        
-        // List<Information> updateTournament = resolve(operationIDS.get("updateTournament"), new LinkedList<>());
+        // List<Information> postTournament = resolve(operationIDS.get("postTournament"), new LinkedList<>());
         // List<Information> deleteTournament = resolve(operationIDS.get("deleteTournament"), new LinkedList<>());
         // List<Information> getEnrollments = resolve(operationIDS.get("getTournamentEnrollments"), new LinkedList<>());
-        // List<Information> checkEnrollment = resolve(operationIDS.get("checkEnrollment"), new LinkedList<>());
+        //List<Information> checkEnrollment = resolve(operationIDS.get("checkEnrollment"), new LinkedList<>());
         // List<Information> checkEnrollment2 = resolve(operationIDS.get("checkEnrollment"), new LinkedList<>());
-
         // List<Information> getTournaments = resolve(operationIDS.get("getTournaments"), new LinkedList<>());
         //List<Information> postPlayer = resolve(operationIDS.get("postPlayer"), new LinkedList<>());
-        // List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
         // List<Information> deleteTournament = resolve(operationIDS.get("deleteTournament"), new LinkedList<>());
         // List<Information> getPlayers = resolve(operationIDS.get("getPlayers"), new LinkedList<>());
         // List<Information> updateTournament = resolve(operationIDS.get("updateTournament"), new LinkedList<>());
         //List<Information> deleteEnrollment = resolve(operationIDS.get("deleteEnrollment"), new LinkedList<>());
+        //List<Information> deletePlayer = resolve(operationIDS.get("deletePlayer"), new LinkedList<>());
         //List<Information> postEnrollment = resolve(operationIDS.get("postEnrollment"), new LinkedList<>());
         // getStateOfData();
         // System.out.println("AAAAAAAAAAAAAA");
@@ -210,13 +209,13 @@ public class BackTrackGraphV2 {
         // System.out.println("*****************");
         // System.out.println("################");
         
-        // print_information(updateTournament);
+        // print_information(postTournament);
         // print_information(deleteTournament);
         // print_information(getEnrollments);
 
-        // print_information(postPlayer);
-        // print_information(deleteEnrollment);
-        // print_information(deletePlayer);
+        //print_information(checkEnrollment);
+        //print_information(deleteEnrollment);
+        //print_information(deletePlayer);
         // print_information(deleteTournament);
         // print_information(getPlayers);
         // print_information(updateTournament);
@@ -276,22 +275,7 @@ public class BackTrackGraphV2 {
 
         for(Operation o : s) {
             List<String> requires_list = o.getRequires();
-            RequestBodySchema aaa = o.getRequestBody();
-            //System.out.println("I am this operation " + o.getOperationID() + " "  + "and these are my requestBody parameters: ");
-            if(aaa != null) {
-                Schema esquima = null;
-                //esquima = spec.dereferenceSchema((ReferencedBodySchema) o.getRequestBody());
-                esquima = spec.dereferenceSchema(((ReferencedBodySchema) o.getRequestBody()).getName());
-
-                //System.out.println("Name : " +  esquima.getName() + " Type: " + esquima.getType());
-
-            }
-
-            //System.out.println("------------------------------");
-
-            // if(esquima != null) {
-            //     System.out.println("Name: " + esquima.getName() + " Type" + esquima.getType());
-            // }
+      
             List<String> parsed_list = parseRequires(requires_list);
             operationsRequires.put(o,parsed_list);
             for(String pre : parsed_list) {
@@ -313,9 +297,11 @@ public class BackTrackGraphV2 {
                         history.put(o.getOperationID(),new LinkedList<>());
                         postBagV2.add(o.getOperationID());
 
+                    } else {
+                        // This one would fail for postE and postP
+                        btg.addEdge(o,operationsURLs.get(new_pre) , new RequiresEdge());
                     }
-
-                    btg.addEdge(o,operationsURLs.get(new_pre) , new RequiresEdge());
+                   
 
                 }
                 else {
@@ -565,6 +551,7 @@ public class BackTrackGraphV2 {
      */
     private List<Information> resolve(Operation o, List<Information> toReturn) {
 
+        // usar switch mais fancy
         List<Information> sequence = new LinkedList<>();
         switch(o.getVerb()) {
 
@@ -1012,7 +999,7 @@ public class BackTrackGraphV2 {
             for(Information i : child_list) {
                 if(i.hasArguments()) {
                     List<Information> arguments = i.getArguments();
-                    if(arguments.contains(info_of_deletion)) {
+                    if(arguments.contains(info_of_deletion) && (i.getStatus() != Status.UNAVAILABLE)) {
                         // This means it will be corrupted so we need to delete it also!
 
                         i.setStatus(Status.CORRUPTED);

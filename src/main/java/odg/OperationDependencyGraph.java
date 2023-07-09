@@ -32,8 +32,7 @@ public class OperationDependencyGraph {
             odg.addVertex(entry.getValue());
             Operation o = entry.getValue();
         }
-
-
+    
         // Adding dependency edges
         for (Map.Entry<String, Operation> entry: operations.entrySet()) {
             op = entry.getValue();
@@ -68,12 +67,20 @@ public class OperationDependencyGraph {
         sorts.add(topologicalSort(iterator));
 
         // Finding the different sorts based on the implemented custom comparators
-        for(Comparator<Operation> comparator : comparators){
-            iterator = new TopologicalOrderIterator<>(odg, comparator);
-            sort = topologicalSort(iterator);
+        // for(Comparator<Operation> comparator : comparators){
+        //     iterator = new TopologicalOrderIterator<>(odg, comparator);
+        //     sort = topologicalSort(iterator);
 
-            if(!sorts.contains(sort))
-                sorts.add(sort);
+        //     if(!sorts.contains(sort))
+        //         sorts.add(sort);
+        // }
+
+        for(int i = 0; i < 500000; i++) {
+            Comparator<Operation> c = getRandomComparator(comparators);
+            iterator = new TopologicalOrderIterator<>(odg, c);
+            sort = topologicalSort(iterator);
+            sorts.add(sort);
+            
         }
 
         return sorts;
@@ -89,6 +96,19 @@ public class OperationDependencyGraph {
         }
 
         return operationOrder;
+    }
+
+    private Comparator<Operation> getRandomComparator(List<Comparator<Operation>> comparators) {
+        List<Comparator<Operation>> comp = comparators();
+        int rnd = new Random().nextInt(comp.size());
+        int i = 0;
+        for(Comparator<Operation> c : comparators) {
+            if(i == rnd)
+                return c;
+            i++;
+        }
+
+        return null;
     }
 
     private List<Comparator<Operation>> comparators (){
