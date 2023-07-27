@@ -25,3 +25,11 @@ In the Main Class the constructor must receive the following information :
 - Number of iterations : number of operations in each sequence
 - Number of sequences
 - Threshold : the limit of backtracks allowed in the graph
+
+## TO DO List
+
+- [ ] Create a better approach to deactivate the safety mechanisms in the faulty sequences
+- [ ] Re-use certain operations in history with extra logic (optional)
+- [ ] Create a filter for repetitive sequences
+- [ ] Add a POST limitation filter for some interesting tests
+- [ ] Refactor the code
