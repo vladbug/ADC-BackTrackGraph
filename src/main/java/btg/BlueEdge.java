@@ -2,9 +2,9 @@ package btg;
 
 import org.jgrapht.graph.DefaultEdge;
 
-public class SelfEdge extends DefaultEdge{
+public class BlueEdge extends DefaultEdge {
 
-    public SelfEdge() {
+    public BlueEdge() {
         
     }
     

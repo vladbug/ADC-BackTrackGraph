@@ -5,7 +5,7 @@ import parser_domain.Operation;
 import java.util.*;
 
 
-public class Information {
+public class Annotation {
 
     private Operation operation;
 
@@ -13,11 +13,11 @@ public class Information {
 
     private int cardinality;
 
-    private List<Information> arguments; // not all of them will have these
+    private List<Annotation> arguments; // not all of them will have these
 
     private List<Operation> feeding;
 
-    public Information(Operation operation, Status status, int cardinality) {
+    public Annotation(Operation operation, Status status, int cardinality) {
         this.operation = operation;
         this.status = status;
         this.cardinality = cardinality;
@@ -26,19 +26,11 @@ public class Information {
     }
 
 
-    public void addArgument(Information i) {
+    public void addArgument(Annotation i) {
         arguments.add(i);
     }
 
-    public void addChilden(Operation o) {
-        feeding.add(o);
-    }
-
-    public boolean checkUse(Operation o) {
-        return feeding.contains(o);
-    }
-
-    public List<Information> getArguments() {
+    public List<Annotation> getArguments() {
         return arguments;
     }
 
@@ -46,7 +38,7 @@ public class Information {
         return arguments.size() > 0;
     }
 
-    public boolean hasTheSameArguments(List<Information> list) {
+    public boolean hasTheSameArguments(List<Annotation> list) {
         return arguments.equals(list);
     }
 
@@ -69,7 +61,7 @@ public class Information {
     @Override
     public boolean equals(Object o) {
         
-        Information other = (Information) o;
+        Annotation other = (Annotation) o;
 
         if(this.operation.getOperationID().equals(other.operation.getOperationID()) &&
         this.cardinality == other.cardinality && this.status == other.status) {

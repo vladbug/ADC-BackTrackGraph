@@ -2,9 +2,9 @@ package btg;
 
 import org.jgrapht.graph.DefaultEdge;
 
-public class TimeEdge extends DefaultEdge {
+public class RedEdge extends DefaultEdge {
 
-    public TimeEdge() {
+    public RedEdge() {
 
     }
     
