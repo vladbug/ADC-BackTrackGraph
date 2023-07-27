@@ -13,7 +13,7 @@ It's possible to generated nominal and faulty tests with this tool.
 
 In the Main Class the constructor must receive the following information :
 - Specification File Operations
-- Mode : boolean parameter that will be 'true'
+- Mode : boolean parameter that will be `true`
 - Number of iterations : number of operations in each sequence
 - Number of sequences
 
@@ -21,7 +21,7 @@ In the Main Class the constructor must receive the following information :
 
 In the Main Class the constructor must receive the following information :
 - Specification File Operations
-- Mode : boolean parameter that will be 'false'
+- Mode : boolean parameter that will be `false`
 - Number of iterations : number of operations in each sequence
 - Number of sequences
 - Threshold : the limit of backtracks allowed in the graph
