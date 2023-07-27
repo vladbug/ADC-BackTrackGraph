@@ -110,7 +110,83 @@ public class BackTrackGraph {
         tombstone = new LinkedList<>();
         postBag = new LinkedList<>();
         optimistic = option;
-        threshold = 1;
+        threshold = 0;
+        nr_of_backtracks = 0;
+
+        // Adding every operation as a vertex
+        for (Map.Entry<String, Operation> entry : operations.entrySet()) {
+            Operation o = entry.getValue();
+            // Constructing the graph
+            btg.addVertex(o);
+            // Will be stored like (POST /tournaments)
+            operationsURLs.put("(" + o.getVerb() + " " + o.getUrl() + ")", o);
+            // Will be store like postTournament Operation : postTournament
+            operationIDS.put(o.getOperationID(), o);
+            // Will be store Operation and the VERB associated
+            operationVerbs.put(o, o.getVerb());
+        }
+
+        // If in the end we won't use this then we can remote it
+
+        try {
+            String file_loc = "src/main/resources/tournaments-magmact-extended.json";
+            spec = Parser.parse(file_loc);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+
+        // Creation of the graph
+        createRequiresConnections();
+        inferLinks_v3();
+        applyTransitiveFilter();
+
+        List<List<Annotation>> call_sequences = new LinkedList<>();
+
+        // Generation of the call sequences
+        for (int i = 0; i < nr_different_test; i++) {
+            List<Annotation> generated = generateSequenceV3(it_number);
+            call_sequences.add(generated);
+            
+            // Wipe information for next sequence
+            history = new HashMap<>(100);
+            for (String s : postBag) {
+                history.put(s, new LinkedList<>());
+            }
+            nr_of_backtracks = 0;
+            stop = false;
+        }
+
+        int counter = 1;
+        for(List<Annotation> l : call_sequences) {
+            System.out.println("Test number #" + counter);
+
+            if(!optimistic) {
+
+                if(l.get(l.size() - 1).getStatus() == Status.NEGATIVE) {
+                    print_information(l);
+                } else {
+                    System.out.println("Did not break the threshold");
+                }
+            } else {
+                print_information(l);
+            }
+
+            counter++;
+        }
+    }
+
+    public BackTrackGraph(Map<String, Operation> operations, boolean option, int it_number, int nr_different_test, int threshold) {
+
+        btg = new DefaultDirectedGraph<>(null, null, false);
+        operationsURLs = new HashMap<>(100);
+        operationsRequires = new HashMap<>(100);
+        operationIDS = new HashMap<>(100);
+        operationVerbs = new HashMap<>(100);
+        history = new HashMap<>(100);
+        tombstone = new LinkedList<>();
+        postBag = new LinkedList<>();
+        optimistic = option;
+        this.threshold = threshold;
         nr_of_backtracks = 0;
 
         // Adding every operation as a vertex

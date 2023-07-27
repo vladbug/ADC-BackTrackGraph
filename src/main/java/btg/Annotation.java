@@ -15,14 +15,13 @@ public class Annotation {
 
     private List<Annotation> arguments; // not all of them will have these
 
-    private List<Operation> feeding;
 
     public Annotation(Operation operation, Status status, int cardinality) {
         this.operation = operation;
         this.status = status;
         this.cardinality = cardinality;
         arguments = new LinkedList<>();
-        feeding = new LinkedList<>();
+
     }
 
 

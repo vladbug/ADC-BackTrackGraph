@@ -23,7 +23,7 @@ public class Main {
         Specification spec = Parser.parse(file_loc);
    
         Instant start = Instant.now();
-        BackTrackGraph btg = new BackTrackGraph(spec.getOperations(),false,10,10);
+        BackTrackGraph btg = new BackTrackGraph(spec.getOperations(),false,10,10,100);
         Instant end = Instant.now();
         long time = Duration.between(start, end).toMillis();
         long milliseconds = time;
