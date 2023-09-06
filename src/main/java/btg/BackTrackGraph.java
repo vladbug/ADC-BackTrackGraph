@@ -1,29 +1,22 @@
 package btg;
 
-import java.sql.Time;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Stack;
-import java.util.TreeMap;
 
 import org.jgrapht.Graph;
-import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DefaultUndirectedGraph;
-import org.jgrapht.graph.SimpleDirectedGraph;
 
 import parser_domain.*;
-import parser.Parser;
 
 public class BackTrackGraph {
 
@@ -87,11 +80,24 @@ public class BackTrackGraph {
     private List<Operation> tombstone;
 
     /**
-     * DEPRECATED
+     * Extended OpenAPI specification file
      */
     private Specification spec;
 
-    private boolean optimistic;
+    /**
+     * Indicates whether we're generating nominal or error call sequences.
+     */
+    private boolean nominal;
+
+    /**
+     * Number of random operations in each sequence
+     */
+    private int rands;
+
+    /**
+     * Number of sequences to be generated
+     */
+    private int seqs;
 
     private boolean stop;
 
@@ -99,84 +105,38 @@ public class BackTrackGraph {
 
     private int nr_of_backtracks;
 
-    public BackTrackGraph(Map<String, Operation> operations, boolean option, int it_number, int nr_different_test) {
 
-        btg = new DefaultDirectedGraph<>(null, null, false);
-        operationsURLs = new HashMap<>(100);
-        operationsRequires = new HashMap<>(100);
-        operationIDS = new HashMap<>(100);
-        operationVerbs = new HashMap<>(100);
-        history = new HashMap<>(100);
-        tombstone = new LinkedList<>();
-        postBag = new LinkedList<>();
-        optimistic = option;
-        threshold = 0;
-        nr_of_backtracks = 0;
+    /**
+     * Prints all generated call sequences
+     * @param call_sequences    sequences to print
+     */
+    public void printCallSequences(List<List<Annotation>> call_sequences) {
+        int seq = 1;
 
-        // Adding every operation as a vertex
-        for (Map.Entry<String, Operation> entry : operations.entrySet()) {
-            Operation o = entry.getValue();
-            // Constructing the graph
-            btg.addVertex(o);
-            // Will be stored like (POST /tournaments)
-            operationsURLs.put("(" + o.getVerb() + " " + o.getUrl() + ")", o);
-            // Will be store like postTournament Operation : postTournament
-            operationIDS.put(o.getOperationID(), o);
-            // Will be store Operation and the VERB associated
-            operationVerbs.put(o, o.getVerb());
-        }
-
-        // If in the end we won't use this then we can remote it
-
-        try {
-            String file_loc = "src/main/resources/tournaments-magmact-extended.json";
-            spec = Parser.parse(file_loc);
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-
-        // Creation of the graph
-        createRequiresConnections();
-        inferLinks_v3();
-        applyTransitiveFilter();
-
-        List<List<Annotation>> call_sequences = new LinkedList<>();
-
-        // Generation of the call sequences
-        for (int i = 0; i < nr_different_test; i++) {
-            List<Annotation> generated = generateSequenceV3(it_number);
-            call_sequences.add(generated);
-            
-            // Wipe information for next sequence
-            history = new HashMap<>(100);
-            for (String s : postBag) {
-                history.put(s, new LinkedList<>());
-            }
-            nr_of_backtracks = 0;
-            stop = false;
-        }
-
-        int counter = 1;
         for(List<Annotation> l : call_sequences) {
-            System.out.println("Test number #" + counter);
+            System.out.println("\ncall sequence #" + seq);
 
-            if(!optimistic) {
-
-                if(l.get(l.size() - 1).getStatus() == Status.NEGATIVE) {
-                    print_information(l);
-                } else {
+            if(!nominal)
+                if (l.get(l.size() - 1).getStatus() == Status.NEGATIVE)
+                    printInformation(l);
+                else
                     System.out.println("Did not break the threshold");
-                }
-            } else {
-                print_information(l);
-            }
+            else
+                printInformation(l);
 
-            counter++;
+            seq++;
         }
     }
 
-    public BackTrackGraph(Map<String, Operation> operations, boolean option, int it_number, int nr_different_test, int threshold) {
-
+    /**
+     * Creates a Backtrack Graph.
+     * @param spec          API extended specification
+     * @param nominal       nominal (true); error (false)
+     * @param rands         number of randomly selected operations in a call sequence
+     * @param seqs          number of different call sequences to generate
+     * @param threshold     maximum number of backtracks allowed
+     */
+    public BackTrackGraph(Specification spec, boolean nominal, int rands, int seqs, int threshold) {
         btg = new DefaultDirectedGraph<>(null, null, false);
         operationsURLs = new HashMap<>(100);
         operationsRequires = new HashMap<>(100);
@@ -185,9 +145,12 @@ public class BackTrackGraph {
         history = new HashMap<>(100);
         tombstone = new LinkedList<>();
         postBag = new LinkedList<>();
-        optimistic = option;
+        this.nominal = nominal;
+        this.rands = rands;
+        this.seqs = seqs;
         this.threshold = threshold;
         nr_of_backtracks = 0;
+        Map<String, Operation> operations = spec.getOperations();
 
         // Adding every operation as a vertex
         for (Map.Entry<String, Operation> entry : operations.entrySet()) {
@@ -202,53 +165,34 @@ public class BackTrackGraph {
             operationVerbs.put(o, o.getVerb());
         }
 
-        // If in the end we won't use this then we can remote it
-
-        try {
-            String file_loc = "src/main/resources/tournaments-magmact-extended.json";
-            spec = Parser.parse(file_loc);
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-
-        // Creation of the graph
+        // Building the graph
         createRequiresConnections();
         inferLinks_v3();
         applyTransitiveFilter();
+    }
 
+    /**
+     * Generates call sequences.
+     * @return call sequences
+     */
+    public List<List<Annotation>> generateCallSequences() {
         List<List<Annotation>> call_sequences = new LinkedList<>();
 
-        // Generation of the call sequences
-        for (int i = 0; i < nr_different_test; i++) {
-            List<Annotation> generated = generateSequenceV3(it_number);
+        for (int i = 0; i < seqs; i++) {
+            List<Annotation> generated = generateSequenceV3(rands);
             call_sequences.add(generated);
-            
+
             // Wipe information for next sequence
             history = new HashMap<>(100);
-            for (String s : postBag) {
+
+            for (String s : postBag)
                 history.put(s, new LinkedList<>());
-            }
+
             nr_of_backtracks = 0;
             stop = false;
         }
 
-        int counter = 1;
-        for(List<Annotation> l : call_sequences) {
-            System.out.println("Test number #" + counter);
-
-            if(!optimistic) {
-
-                if(l.get(l.size() - 1).getStatus() == Status.NEGATIVE) {
-                    print_information(l);
-                } else {
-                    System.out.println("Did not break the threshold");
-                }
-            } else {
-                print_information(l);
-            }
-
-            counter++;
-        }
+        return call_sequences;
     }
 
     /**
@@ -279,17 +223,20 @@ public class BackTrackGraph {
      * 
      * @param info - annotation that we want to extract the information from
      */
-    private void print_information(List<Annotation> info) {
+    private void printInformation(List<Annotation> info) {
         for (Annotation i : info) {
-            System.out.println(
-                    i.getOperation().getOperationID() + " " + "$" + i.getCardinality() + " STATUS: " + i.getStatus());
+            System.out.println(i.getOperation().getOperationID() + " "
+                    + "$" + i.getCardinality()
+                    + " STATUS: " + i.getStatus());
+
             if (i.hasArguments()) {
                 List<Annotation> args = i.getArguments();
-                System.out.println("Arguments : ");
-                for (Annotation args_i : args) {
-                    System.out.println(args_i.getOperation().getOperationID() + " " + "$" + args_i.getCardinality()
+                System.out.println("Arguments: ");
+
+                for (Annotation args_i : args)
+                    System.out.println(args_i.getOperation().getOperationID()
+                            + " " + "$" + args_i.getCardinality()
                             + " STATUS: " + args_i.getStatus());
-                }
             }
         }
     }
@@ -533,83 +480,37 @@ public class BackTrackGraph {
     }
 
     /**
-     * Generates one call sequence with nr_iterations indicated
-     * 
-     * @param nr_iterations - number of iterations to perform
+     * Generates a single call sequence
+     * @return call sequence
      */
-    public void generateSequence(int nr_iterations) {
-
-        for (int i = 0; i < nr_iterations; i++) {
-            if (stop) {
-                break;
-            }
-            Operation o = getRandomOperation();
-            System.out.println("Random op selected: " + o.getOperationID());
-            List<Annotation> resolved = resolve(o);
-            print_information(resolved);
-
-        }
-
-    }
-
-    public void generateSequenceV2(int nr_iterations) {
-
+    public List<Annotation> generateSequenceV3() {
         List<Annotation> toReturn = new LinkedList<>();
 
-        for (int i = 0; i < nr_iterations; i++) {
-            if (stop) {
-                break;
-            }
+        for (int i = 0; i < rands; i++) {
+            if (stop) break;
+
             Operation o = getRandomOperation();
-            //System.out.println("Random op selected: " + o.getOperationID());
+            System.out.println("random: " + o.getOperationID());
             List<Annotation> resolved = resolve(o);
-            for(Annotation a : resolved) {
+
+            for(Annotation a : resolved)
                 toReturn.add(a);
-            }
 
         }
 
-        if(!optimistic) {
-
-            if(toReturn.get(toReturn.size() - 1).getStatus() == Status.NEGATIVE) {
-                print_information(toReturn);
-            } else {
-                System.out.println("Did not break the threshold");
-            }
-        } else {
-            print_information(toReturn);
-        }
-    
-    }
-
-    public List<Annotation> generateSequenceV3(int nr_iterations) {
-
-        List<Annotation> toReturn = new LinkedList<>();
-
-        for (int i = 0; i < nr_iterations; i++) {
-            if (stop) {
-                break;
-            }
-            Operation o = getRandomOperation();
-            //System.out.println("Random op selected: " + o.getOperationID());
-            List<Annotation> resolved = resolve(o);
-            for(Annotation a : resolved) {
-                toReturn.add(a);
-            }
-
-        }
+        // TODO REMOVE
+        System.out.println("");
 
         return toReturn;
-       
     }
 
     /**
      *
      * @param o - Operation received
      *          In this method we will just decide what to do with
-     *          the choices that we have. We will detect wich
+     *          the choices that we have. We will detect which
      *          operation it is and perform logic into it
-     *          in order to append to the returnal list
+     *          in order to append to the retrieved list
      */
     private List<Annotation> resolve(Operation o) {
 
@@ -689,7 +590,7 @@ public class BackTrackGraph {
             needed.remove(creator);
             List<Annotation> toReturn;
 
-            if (optimistic) {
+            if (nominal) {
                 toReturn = backTrackPost(creator, needed);
             } else {
                 // The option given is to create non-optimistic sequences
@@ -771,7 +672,7 @@ public class BackTrackGraph {
             needed.remove(creator);
             List<Annotation> toReturn;
 
-            if (optimistic) {
+            if (nominal) {
                 toReturn = backTrackPost(creator, needed);
             } else {
                 // The option given is to create non-optimistic sequences
@@ -866,7 +767,7 @@ public class BackTrackGraph {
                 List<Operation> needed = needed(o);
                 List<Annotation> toReturn;
 
-                if (optimistic) {
+                if (nominal) {
                     toReturn = backTrackDelete(o, needed);
 
                 } else {
@@ -932,7 +833,7 @@ public class BackTrackGraph {
                 List<Operation> needed = needed(o);
                 List<Annotation> toReturn;
 
-                if (optimistic) {
+                if (nominal) {
                     toReturn = backTrackDelete(o, needed);
                 } else {
                     if (nr_of_backtracks < threshold) {
@@ -980,7 +881,7 @@ public class BackTrackGraph {
     /**
      * This will retrieve the sequence that we must do the cascade deletion
      * update the data structure and retrieve it
-     * @param toDelete
+     * //@param toDelete
      * @return
      */
     private List<Annotation> cascadeDelete(Operation o_corrupted) {
@@ -1250,7 +1151,7 @@ public class BackTrackGraph {
 
                 List<Operation> needed = needed(o);
                 List<Annotation> toReturn;
-                if (optimistic) {
+                if (nominal) {
 
                     List<Annotation> backtracked = backTrackPost(o, needed);
                     for (Annotation info_update : backtracked) {
@@ -1300,7 +1201,7 @@ public class BackTrackGraph {
                 // We must backtrack
                 List<Operation> needed = needed(o);
                 List<Annotation> toReturn;
-                if (optimistic) {
+                if (nominal) {
                     List<Annotation> backtracked = backTrackPost(o, needed);
                     for (Annotation info_update : backtracked) {
                         List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
@@ -1504,6 +1405,7 @@ public class BackTrackGraph {
         // Devolve numero aleatorio entre 0 e size - 1
         int rnd = new Random().nextInt(size);
         int i = 0;
+
         for (Operation o : operations) {
             if (i == rnd)
                 return o;
@@ -1513,7 +1415,7 @@ public class BackTrackGraph {
         return null;
     }
 
-    // Is this even generical enough?
+    // Is this even generic enough?
     /**
      * Parses the requires string
      * @param requires - requires string
@@ -1540,38 +1442,5 @@ public class BackTrackGraph {
         }
         return parsed_requires;
     }
-
-    /***
-     * Parses the ensures, not used but could be used in the future.
-     * @param ensures - ensures to parse
-     * @return - parsed esnures
-     */
-    private List<String> parseEnsures(List<String> ensures) {
-        List<String> parsed_ensures = new LinkedList<>();
-        // [response_code(GET /players/request_body(this){playerNIF}) == 200]
-        for (String s : ensures) {
-            if (s.contains("GET")) {
-                String sub_string = s.substring(13); // magic number
-
-                // I want to remove the information in the String until ==
-                String[] raw = sub_string.split("==");
-                String[] remove_request_body = raw[0].split("request_body\\(this\\)");
-                String new_pre = remove_request_body[0] + remove_request_body[1];
-                parsed_ensures.add(new_pre);
-            }
-        }
-        return parsed_ensures;
-    }
-
-    /**
-     * Removes the request_body of a requires
-     * @param string - requires 
-     * @return - parsed requires without the request_body
-     */
-    private String remove_request_body(List<String> string) {
-        String[] remove_request_body = string.get(0).split("request_body\\(this\\)");
-        String new_pre = remove_request_body[0] + remove_request_body[1];
-        return new_pre;
-    }
-
+    
 }
