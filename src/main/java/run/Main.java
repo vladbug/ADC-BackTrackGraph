@@ -1,21 +1,18 @@
 package run;
 
-import btg.Annotation;
-import odg.exceptions.VertexDoesNotExistException;
-import parser.Parser;
-import parser_domain.Specification;
-
-import java.io.FileNotFoundException;
-
-import btg.BackTrackGraph;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import btg.BackTrackGraph;
+import btg.Annotation;
+
+import parser.Parser;
+import parser_domain.Specification;
+
 public class Main {
 
-    public static void main(String[] args) throws FileNotFoundException, VertexDoesNotExistException {
+    public static void main(String[] args) {
         try {
             Instant start = Instant.now();
 

@@ -27,21 +27,25 @@ public class BackTrackGraph {
     private Graph<Operation, DefaultEdge> btg;
 
     /**
-     * This is map stores the operations based on their URLs
-     * so for an URL we will have an operation associated to it
+     * Operations by URL
      */
     private Map<String, Operation> operationsURLs;
-
-    /**
-     * This map will be responsible to store the operations according to their
-     * operationIDs
-     */
-    private Map<String, Operation> operationIDS;
 
     /**
      * This map will be responsible to assign the operation to it's requires list
      */
     private Map<Operation, List<String>> operationsRequires;
+
+    /**
+     * Operations by id.
+     */
+    private Map<String, Operation> operationIDS;
+
+    /**
+     * This map will map the VERB of the operation to the operation
+     *
+     */
+    private Map<Operation, String> operationVerbs;
 
     /**
      * Used to wipe information between different call sequences
@@ -73,71 +77,12 @@ public class BackTrackGraph {
     /**
      * Number of sequences to be generated
      */
-    private int seqs;
+    private int sequences;
+
     private boolean stop;
     private int threshold;
-    private int nr_of_backtracks;
+    private int backtracks;
 
-
-    /**
-     * Creates a Backtrack Graph.
-     * @param spec          API extended specification
-     * @param nominal       nominal (true); error (false)
-     * @param rands         number of randomly selected operations in a call sequence
-     * @param seqs          number of different call sequences to generate
-     * @param threshold     maximum number of backtracks allowed
-     */
-    public BackTrackGraph(Specification spec, boolean nominal, int rands, int seqs, int threshold) {
-        btg = new DefaultDirectedGraph<>(null, null, false);
-        operationsURLs = new HashMap<>(100);
-        operationsRequires = new HashMap<>(100);
-        history = new HashMap<>(100);
-        postBag = new LinkedList<>();
-        this.nominal = nominal;
-        this.rands = rands;
-        this.seqs = seqs;
-        this.threshold = threshold;
-        nr_of_backtracks = 0;
-        Map<String, Operation> operations = spec.getOperations();
-
-        // Adding every operation as a vertex
-        for (Map.Entry<String, Operation> entry : operations.entrySet()) {
-            Operation o = entry.getValue();
-            // Constructing the graph
-            btg.addVertex(o);
-            // Will be stored like (POST /tournaments)
-            //operationsURLs.put("(" + o.getVerb() + " " + o.getUrl() + ")", o);
-        }
-
-        // Building the graph
-        createRequiresConnections();
-        inferLinks();
-        applyTransitiveFilter();
-    }
-
-    /**
-     * Generates call sequences.
-     * @return call sequences
-     */
-    public List<List<Annotation>> generateCallSequences() {
-        List<List<Annotation>> call_sequences = new LinkedList<>();
-
-        for (int i = 0; i < seqs; i++) {
-            List<Annotation> generated = generateSequence();
-            call_sequences.add(generated);
-
-            // Wipe information for next sequence
-            history = new HashMap<>(100);
-
-            for (String s : postBag)
-                history.put(s, new LinkedList<>());
-
-            nr_of_backtracks = 0;
-            stop = false;
-        }
-
-        return call_sequences;
-    }
 
     /**
      * Prints all generated call sequences
@@ -162,28 +107,69 @@ public class BackTrackGraph {
     }
 
     /**
-     * Generates a single call sequence
-     * @return call sequence
+     * Creates a Backtrack Graph.
+     * @param spec          API extended specification
+     * @param nominal       nominal (true); error (false)
+     * @param rands         number of randomly selected operations in a call sequence
+     * @param sequences          number of different call sequences to generate
+     * @param threshold     maximum number of backtracks allowed
      */
-    public List<Annotation> generateSequence() {
-        List<Annotation> toReturn = new LinkedList<>();
+    public BackTrackGraph(Specification spec, boolean nominal, int rands, int sequences, int threshold) {
+        btg = new DefaultDirectedGraph<>(null, null, false);
+        operationsURLs = new HashMap<>(100);
+        operationsRequires = new HashMap<>(100);
+        operationIDS = new HashMap<>(100);
+        operationVerbs = new HashMap<>(100);
+        history = new HashMap<>(100);
+        postBag = new LinkedList<>();
+        this.nominal = nominal;
+        this.rands = rands;
+        this.sequences = sequences;
+        this.threshold = threshold;
+        backtracks = 0;
+        Map<String, Operation> operations = spec.getOperations();
 
-        for (int i = 0; i < rands; i++) {
-            if (stop) break;
-
-            Operation o = getRandomOperation();
-            System.out.println("random: " + o.getOperationID());
-            List<Annotation> resolved = resolve(o);
-
-            for(Annotation a : resolved)
-                toReturn.add(a);
-
+        // Adding every operation as a vertex
+        for (Map.Entry<String, Operation> entry : operations.entrySet()) {
+            Operation o = entry.getValue();
+            // Constructing the graph
+            btg.addVertex(o);
+            // Will be stored like (POST /tournaments)
+            operationsURLs.put("(" + o.getVerb() + " " + o.getUrl() + ")", o);
+            // Will be store like postTournament Operation : postTournament
+            operationIDS.put(o.getOperationID(), o);
+            // Will be store Operation and the VERB associated
+            operationVerbs.put(o, o.getVerb());
         }
 
-        // TODO REMOVE
-        System.out.println("");
+        // Building the graph
+        createRequiresConnections();
+        inferLinks_v3();
+        applyTransitiveFilter();
+    }
 
-        return toReturn;
+    /**
+     * Generates call sequences.
+     * @return call sequences
+     */
+    public List<List<Annotation>> generateCallSequences() {
+        List<List<Annotation>> call_sequences = new LinkedList<>();
+
+        for (int i = 0; i < sequences; i++) {
+            List<Annotation> generated = generateSequence();
+            call_sequences.add(generated);
+
+            // Wipe information for next sequence
+            history = new HashMap<>(100);
+
+            for (String s : postBag)
+                history.put(s, new LinkedList<>());
+
+            backtracks = 0;
+            stop = false;
+        }
+
+        return call_sequences;
     }
 
     /**
@@ -230,6 +216,31 @@ public class BackTrackGraph {
     }
 
     /**
+     * Generates a single call sequence
+     * @return call sequence
+     */
+    public List<Annotation> generateSequence() {
+        List<Annotation> toReturn = new LinkedList<>();
+
+        for (int i = 0; i < rands; i++) {
+            if (stop) break;
+
+            Operation o = getRandomOperation();
+            System.out.println("random: " + o.getOperationID());
+            List<Annotation> resolved = resolve(o);
+
+            for(Annotation a : resolved)
+                toReturn.add(a);
+
+        }
+
+        // TODO REMOVE
+        System.out.println("");
+
+        return toReturn;
+    }
+
+    /**
      * Generates the combinatory
      * @param lists
      * @return - return the combinatory
@@ -264,7 +275,247 @@ public class BackTrackGraph {
     }
 
 
+    /**
+     * If we want to get the state of the dataStructure for debug
+     * purposes
+     */
+    private void getStateOfData() {
+        List<Annotation> pre_1 = history.get("postPlayer");
+        List<Annotation> pre_2 = history.get("postTournament");
+        List<Annotation> pre_3 = history.get("postEnrollment");
 
+        for (Annotation i : pre_1) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+        System.out.println("---------");
+        for (Annotation i : pre_2) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+        System.out.println("---------");
+        for (Annotation i : pre_3) {
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+        }
+        System.out.println("---------");
+    }
+
+    /**
+     * Print the information relative to the annotation
+     *
+     * @param info - annotation that we want to extract the information from
+     */
+    private void printInformation(List<Annotation> info) {
+        for (Annotation i : info) {
+            System.out.println(i.getOperation().getOperationID() + " "
+                    + "$" + i.getCardinality()
+                    + " STATUS: " + i.getStatus());
+
+            if (i.hasArguments()) {
+                List<Annotation> args = i.getArguments();
+                System.out.println("Arguments: ");
+
+                for (Annotation args_i : args)
+                    System.out.println(args_i.getOperation().getOperationID()
+                            + " " + "$" + args_i.getCardinality()
+                            + " STATUS: " + args_i.getStatus());
+            }
+        }
+    }
+
+    /**
+     * Given the JSON file we will create the black-edges
+     */
+    private void createRequiresConnections() {
+        Set<Operation> s = btg.vertexSet();
+
+        for (Operation o : s) {
+            List<String> requires_list = o.getRequires();
+
+            List<String> parsed_list = parseRequires(requires_list);
+            operationsRequires.put(o, parsed_list);
+            for (String pre : parsed_list) {
+                if (pre.equals("T")) {
+                    // These are the nodes can don't have any dependencies
+                } else if (pre.contains("request_body")) {
+                    // We need to change the way that the pre-conditions with the request_body word
+                    // GET /players/request_body(this){playerNIF}
+                    String[] remove_request_body = pre.split("request_body\\(this\\)");
+                    // (GET /players/{playerNIF})
+                    String new_pre = remove_request_body[0] + remove_request_body[1];
+                    // Check if it is a self-getter or no! In this scenario it is always the
+                    // post of something so we want to know if there is already a post of that
+                    if (o.getVerb().equals("POST") && new_pre.contains(o.getUrl())) {
+
+                        btg.addEdge(o, operationsURLs.get(new_pre), new BlackDashedEdge());
+
+                        history.put(o.getOperationID(), new LinkedList<>());
+                        postBag.add(o.getOperationID());
+
+                    } else {
+                        // This one would fail for postE and postP
+                        btg.addEdge(o, operationsURLs.get(new_pre), new BlackEdge());
+                    }
+
+                } else {
+
+                    btg.addEdge(o, operationsURLs.get(pre), new BlackEdge());
+
+                }
+
+            }
+        }
+
+    }
+
+    /**
+     * After the initial building of the graph we must
+     * infer all the other dependencies betweeen the nodes
+     */
+    private void inferLinks_v3() {
+
+        Set<Operation> set = new HashSet<>(btg.vertexSet());
+        Set<Operation> operationsToAdd = new HashSet<>();
+        Set<Operation> operationsForTime = new HashSet<>();
+
+        for (Operation o : set) {
+            Set<DefaultEdge> edge_set = btg.incomingEdgesOf(o);
+            for (DefaultEdge e : edge_set) {
+                if (e instanceof BlackDashedEdge) {
+                    operationsToAdd.add(btg.getEdgeSource(e));
+                }
+
+                if (e instanceof BlackEdge) {
+                    operationsForTime.add(btg.getEdgeSource(e));
+                }
+
+            }
+
+            for (Operation o_add : operationsToAdd) {
+                btg.addEdge(o, o_add, new BlueEdge());
+                for (Operation o_connect : operationsForTime) {
+                    btg.addEdge(o_connect, o_add, new RedEdge());
+
+                    if (o_connect.getVerb().equals("POST")) {
+                        btg.addEdge(o_add, o_connect, new GreenEdge());
+                    }
+
+                }
+            }
+
+            operationsForTime = new HashSet<>();
+            operationsToAdd = new HashSet<>();
+
+        }
+    }
+
+    /**
+     * This is an important step to make. After infering all the edges
+     * in the graph we apply a filter to guarantee the life-cycle
+     * of each operation
+     */
+    private void applyTransitiveFilter() {
+        Set<Operation> s = btg.vertexSet();
+
+        Map<String, Set<String>> toMaintain = new HashMap<>();
+
+        for (Operation o : s) {
+            // This will be performed for EVERY operation in our graph
+            // We wan't to get the red links of each one of them
+            Set<DefaultEdge> red_edges = new HashSet<>();
+            Set<String> red_edges_operations = new HashSet<>();
+            Set<DefaultEdge> edges = btg.outgoingEdgesOf(o);
+
+            // Now we are only interesested in the red links
+            for (DefaultEdge e : edges) {
+                if (e instanceof RedEdge || e instanceof BlueEdge) {
+                    red_edges.add(e);
+                    red_edges_operations.add(btg.getEdgeTarget(e).getOperationID());
+                }
+            }
+
+            if (red_edges_operations.size() > 1) {
+
+                // Now let's apply the transitivity rule for it
+                List<Set<String>> sets = new LinkedList<>();
+                Set<String> beginner_set = new HashSet<>();
+
+                for (String o_red : red_edges_operations) {
+                    beginner_set.add(o_red);
+                }
+                sets.add(beginner_set);
+
+                // Now let's check if we can traverse the edges
+                for (String o_red : red_edges_operations) {
+
+                    Set<DefaultEdge> out_destination = btg.outgoingEdgesOf(operationIDS.get(o_red));
+
+                    // Out of these out_destionation edges we only want the red ones
+                    // Let's see if it leads to another POSTs
+                    Set<String> potencial_set = new HashSet<>();
+
+                    for (DefaultEdge e_dest : out_destination) {
+                        if (e_dest instanceof RedEdge) {
+
+                            potencial_set.add(btg.getEdgeTarget(e_dest).getOperationID());
+                        }
+                    }
+
+                    sets.add(potencial_set);
+                }
+
+                Set<String> different_elements = my_method(sets);
+
+                toMaintain.put(o.getOperationID(), different_elements);
+
+                // In different_elements we have the links that we have to maintain!
+
+            }
+        }
+
+        for (Operation o : s) {
+
+            Set<DefaultEdge> edges = btg.outgoingEdgesOf(o);
+            Set<String> red_edges = new HashSet<>();
+            for (DefaultEdge e : edges) {
+                if (e instanceof RedEdge) {
+                    red_edges.add(btg.getEdgeTarget(e).getOperationID());
+                }
+            }
+
+            // Now for each of the red links let's remove some
+            Set<String> set = toMaintain.get(o.getOperationID());
+
+            if (set != null) {
+                red_edges.removeAll(set);
+                for (String to_remove : red_edges) {
+                    btg.removeEdge(o, operationIDS.get(to_remove));
+                }
+            }
+
+        }
+
+    }
+
+    /**
+     * Will return the edges that we must maintain
+     *
+     * @param sets - a list of sets
+     * @return - a set with the edges that we must maintain
+     */
+    private Set<String> my_method(List<Set<String>> sets) {
+        Set<String> initial_set = sets.get(0);
+        Set<String> return_set = initial_set;
+
+        for (int i = 1; i < sets.size(); i++) {
+            Set<String> s = sets.get(i);
+            if (!s.isEmpty()) {
+                return_set.removeAll(s);
+            }
+        }
+
+        return return_set;
+
+    }
+    
     /**
      *
      * @param o - Operation received
@@ -305,7 +556,7 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the GET operations
-     * 
+     *
      * @param o - operation in question
      * @return - a list of annotations
      */
@@ -355,9 +606,9 @@ public class BackTrackGraph {
                 toReturn = backTrackPost(creator, needed);
             } else {
                 // The option given is to create non-optimistic sequences
-                if (nr_of_backtracks < threshold) {
+                if (backtracks < threshold) {
                     toReturn = backTrackPost(creator, needed);
-                    nr_of_backtracks++;
+                    backtracks++;
 
                 } else {
                     toReturn = new LinkedList<>();
@@ -393,7 +644,7 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the PUT operations
-     * 
+     *
      * @param o - operation in question
      * @return - a list of annotations
      */
@@ -437,9 +688,9 @@ public class BackTrackGraph {
                 toReturn = backTrackPost(creator, needed);
             } else {
                 // The option given is to create non-optimistic sequences
-                if (nr_of_backtracks < threshold) {
+                if (backtracks < threshold) {
                     toReturn = backTrackPost(creator, needed);
-                    nr_of_backtracks++;
+                    backtracks++;
                 } else {
                     toReturn = new LinkedList<>();
                     append.setStatus(Status.NEGATIVE);
@@ -472,7 +723,7 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the DELETE operations
-     * 
+     *
      * @param o - operation in question
      * @return - a list of annotations
      */
@@ -532,9 +783,9 @@ public class BackTrackGraph {
                     toReturn = backTrackDelete(o, needed);
 
                 } else {
-                    if (nr_of_backtracks < threshold) {
+                    if (backtracks < threshold) {
                         toReturn = backTrackDelete(o, needed);
-                        nr_of_backtracks++;
+                        backtracks++;
                     } else {
                         List<Annotation> list_root = history.get(getCreator(o).getOperationID());
                         Annotation i_root = new Annotation(o, Status.NEGATIVE, list_root.size() + 1);
@@ -597,9 +848,9 @@ public class BackTrackGraph {
                 if (nominal) {
                     toReturn = backTrackDelete(o, needed);
                 } else {
-                    if (nr_of_backtracks < threshold) {
+                    if (backtracks < threshold) {
                         toReturn = backTrackDelete(o, needed);
-                        nr_of_backtracks++;
+                        backtracks++;
                     } else {
                         List<Annotation> list_root = history.get(getCreator(o).getOperationID());
                         Annotation i_root = new Annotation(o, Status.NEGATIVE, list_root.size() + 1);
@@ -618,7 +869,7 @@ public class BackTrackGraph {
                 // And we already know wich one to use!
                 // The thing here is that it can causa cascade delete!
 
-                Annotation info_to_delete = history_list.get(position); 
+                Annotation info_to_delete = history_list.get(position);
                 // info_to_delete.setStatus(Status.UNAVAILABLE);
                 Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getCardinality());
 
@@ -825,7 +1076,7 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the POST operations
-     * 
+     *
      * @param o - operation in question
      * @return - a list of annotations
      */
@@ -852,7 +1103,7 @@ public class BackTrackGraph {
 
     /**
      * Deals with the simple posts
-     * @param o - operation 
+     * @param o - operation
      * @return - annotations for the sequence
      */
     private List<Annotation> copeWithSimplesPost(Operation o) {
@@ -881,7 +1132,7 @@ public class BackTrackGraph {
 
     /**
      * Deals with the compound posts
-     * @param o - operation 
+     * @param o - operation
      * @return - annotations for the sequence
      */
     private List<Annotation> copeWithCompoundPost(Operation o) {
@@ -919,14 +1170,14 @@ public class BackTrackGraph {
                     }
                     toReturn = backtracked;
                 } else {
-                    if (nr_of_backtracks < threshold) {
+                    if (backtracks < threshold) {
                         List<Annotation> backtracked = backTrackPost(o, needed);
                         for (Annotation info_update : backtracked) {
                             List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
                             info_op.add(info_update);
                         }
                         toReturn = backtracked;
-                        nr_of_backtracks++;
+                        backtracks++;
                     } else {
                         Annotation new_info = new Annotation(o, Status.NEGATIVE,
                                 history.get(o.getOperationID()).size() + 1);
@@ -969,14 +1220,14 @@ public class BackTrackGraph {
                     toReturn = backtracked;
 
                 } else {
-                    if (nr_of_backtracks < threshold) {
+                    if (backtracks < threshold) {
                         List<Annotation> backtracked = backTrackPost(o, needed);
                         for (Annotation info_update : backtracked) {
                             List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
                             info_op.add(info_update);
                         }
                         toReturn = backtracked;
-                        nr_of_backtracks++;
+                        backtracks++;
                     } else {
                         Annotation new_info = new Annotation(o, Status.NEGATIVE,
                                 history.get(o.getOperationID()).size() + 1);
@@ -997,12 +1248,12 @@ public class BackTrackGraph {
      */
     private List<Annotation> getValidArguments(Operation o) {
         // We are getting the operations needed for this execution to proceed
-        
+
         List<Operation> needed = needed(o);
 
-        // Now by having them let's run our method that creates the combinatory 
+        // Now by having them let's run our method that creates the combinatory
         List<Annotation> possibility = getPossibility(needed, o);
-      
+
         return possibility;
     }
 
@@ -1074,12 +1325,12 @@ public class BackTrackGraph {
 
         Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(root);
         boolean simple = true;
-        for (DefaultEdge e : edge_set) {
+
+        for (DefaultEdge e : edge_set)
             if (e instanceof RedEdge) {
                 simple = false;
                 break;
             }
-        }
 
         List<Annotation> toReturn = new LinkedList<>();
 
@@ -1087,17 +1338,16 @@ public class BackTrackGraph {
         if (simple) {
             Annotation new_info = new Annotation(root, Status.AVAILABLE, history.get(root.getOperationID()).size() + 1);
             toReturn = List.of(new_info);
-        }
-
-        else {
-
+        } else {
             Stack<Annotation> stack = new Stack<>();
             List<Annotation> list_root = history.get(root.getOperationID());
             Annotation i_root = new Annotation(root, Status.AVAILABLE, list_root.size() + 1);
+
             for (Operation o : needed) {
                 Annotation i_father = new Annotation(o, Status.AVAILABLE, history.get(o.getOperationID()).size() + 1);
                 i_root.addArgument(i_father);
             }
+
             stack.push(i_root);
 
             // Now let's put into the stack the operations that it needs
@@ -1107,15 +1357,11 @@ public class BackTrackGraph {
                 stack.push(i);
             }
 
-            while (!stack.isEmpty()) {
+            while (!stack.isEmpty())
                 toReturn.add(stack.pop());
-            }
-
         }
 
-        List<Annotation> l = new ArrayList<>(toReturn); // weird but ok, fixed UnsupportedOperation lmao
-
-        return l;
+        return new ArrayList<>(toReturn);
     }
 
     /**
@@ -1165,247 +1411,6 @@ public class BackTrackGraph {
             }
         }
         return parsed_requires;
-    }
-
-    /**
-     * If we want to get the state of the dataStructure for debug
-     * purposes
-     */
-    private void getStateOfData() {
-        List<Annotation> pre_1 = history.get("postPlayer");
-        List<Annotation> pre_2 = history.get("postTournament");
-        List<Annotation> pre_3 = history.get("postEnrollment");
-
-        for (Annotation i : pre_1) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        }
-        System.out.println("---------");
-        for (Annotation i : pre_2) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        }
-        System.out.println("---------");
-        for (Annotation i : pre_3) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
-        }
-        System.out.println("---------");
-    }
-
-    /**
-     * Print the information relative to the annotation
-     *
-     * @param info - annotation that we want to extract the information from
-     */
-    private void printInformation(List<Annotation> info) {
-        for (Annotation i : info) {
-            System.out.println(i.getOperation().getOperationID() + " "
-                    + "$" + i.getCardinality()
-                    + " STATUS: " + i.getStatus());
-
-            if (i.hasArguments()) {
-                List<Annotation> args = i.getArguments();
-                System.out.println("Arguments: ");
-
-                for (Annotation args_i : args)
-                    System.out.println(args_i.getOperation().getOperationID()
-                            + " " + "$" + args_i.getCardinality()
-                            + " STATUS: " + args_i.getStatus());
-            }
-        }
-    }
-
-    /**
-     * Given the JSON file we will create the black-edges
-     */
-    private void createRequiresConnections() {
-        Set<Operation> s = btg.vertexSet();
-
-        for (Operation o : s) {
-            List<String> requires_list = o.getRequires();
-
-            List<String> parsed_list = parseRequires(requires_list);
-            operationsRequires.put(o, parsed_list);
-            for (String pre : parsed_list) {
-                if (pre.equals("T")) {
-                    // These are the nodes can don't have any dependencies
-                } else if (pre.contains("request_body")) {
-                    // We need to change the way that the pre-conditions with the request_body word
-                    // GET /players/request_body(this){playerNIF}
-                    String[] remove_request_body = pre.split("request_body\\(this\\)");
-                    // (GET /players/{playerNIF})
-                    String new_pre = remove_request_body[0] + remove_request_body[1];
-                    // Check if it is a self-getter or no! In this scenario it is always the
-                    // post of something so we want to know if there is already a post of that
-                    if (o.getVerb().equals("POST") && new_pre.contains(o.getUrl())) {
-
-                        btg.addEdge(o, operationsURLs.get(new_pre), new BlackDashedEdge());
-
-                        history.put(o.getOperationID(), new LinkedList<>());
-                        postBag.add(o.getOperationID());
-
-                    } else {
-                        // This one would fail for postE and postP
-                        btg.addEdge(o, operationsURLs.get(new_pre), new BlackEdge());
-                    }
-
-                } else {
-
-                    btg.addEdge(o, operationsURLs.get(pre), new BlackEdge());
-
-                }
-
-            }
-        }
-
-    }
-
-    /**
-     * After the initial building of the graph we must
-     * infer all the other dependencies betweeen the nodes
-     */
-    private void inferLinks() {
-
-        Set<Operation> set = new HashSet<>(btg.vertexSet());
-        Set<Operation> operationsToAdd = new HashSet<>();
-        Set<Operation> operationsForTime = new HashSet<>();
-
-        for (Operation o : set) {
-            Set<DefaultEdge> edge_set = btg.incomingEdgesOf(o);
-            for (DefaultEdge e : edge_set) {
-                if (e instanceof BlackDashedEdge) {
-                    operationsToAdd.add(btg.getEdgeSource(e));
-                }
-
-                if (e instanceof BlackEdge) {
-                    operationsForTime.add(btg.getEdgeSource(e));
-                }
-
-            }
-
-            for (Operation o_add : operationsToAdd) {
-                btg.addEdge(o, o_add, new BlueEdge());
-                for (Operation o_connect : operationsForTime) {
-                    btg.addEdge(o_connect, o_add, new RedEdge());
-
-                    if (o_connect.getVerb().equals("POST")) {
-                        btg.addEdge(o_add, o_connect, new GreenEdge());
-                    }
-
-                }
-            }
-
-            operationsForTime = new HashSet<>();
-            operationsToAdd = new HashSet<>();
-
-        }
-    }
-
-    /**
-     * This is an important step to make. After infering all the edges
-     * in the graph we apply a filter to guarantee the life-cycle
-     * of each operation
-     */
-    private void applyTransitiveFilter() {
-        Set<Operation> s = btg.vertexSet();
-
-        Map<String, Set<String>> toMaintain = new HashMap<>();
-
-        for (Operation o : s) {
-            // This will be performed for EVERY operation in our graph
-            // We wan't to get the red links of each one of them
-            Set<DefaultEdge> red_edges = new HashSet<>();
-            Set<String> red_edges_operations = new HashSet<>();
-            Set<DefaultEdge> edges = btg.outgoingEdgesOf(o);
-
-            // Now we are only interesested in the red links
-            for (DefaultEdge e : edges) {
-                if (e instanceof RedEdge || e instanceof BlueEdge) {
-                    red_edges.add(e);
-                    red_edges_operations.add(btg.getEdgeTarget(e).getOperationID());
-                }
-            }
-
-            if (red_edges_operations.size() > 1) {
-
-                // Now let's apply the transitivity rule for it
-                List<Set<String>> sets = new LinkedList<>();
-                Set<String> beginner_set = new HashSet<>();
-
-                for (String o_red : red_edges_operations) {
-                    beginner_set.add(o_red);
-                }
-                sets.add(beginner_set);
-
-                // Now let's check if we can traverse the edges
-                for (String o_red : red_edges_operations) {
-
-                    Set<DefaultEdge> out_destination = btg.outgoingEdgesOf(operationIDS.get(o_red));
-
-                    // Out of these out_destionation edges we only want the red ones
-                    // Let's see if it leads to another POSTs
-                    Set<String> potencial_set = new HashSet<>();
-
-                    for (DefaultEdge e_dest : out_destination) {
-                        if (e_dest instanceof RedEdge) {
-
-                            potencial_set.add(btg.getEdgeTarget(e_dest).getOperationID());
-                        }
-                    }
-
-                    sets.add(potencial_set);
-                }
-
-                Set<String> different_elements = my_method(sets);
-
-                toMaintain.put(o.getOperationID(), different_elements);
-
-                // In different_elements we have the links that we have to maintain!
-
-            }
-        }
-
-        for (Operation o : s) {
-
-            Set<DefaultEdge> edges = btg.outgoingEdgesOf(o);
-            Set<String> red_edges = new HashSet<>();
-            for (DefaultEdge e : edges) {
-                if (e instanceof RedEdge) {
-                    red_edges.add(btg.getEdgeTarget(e).getOperationID());
-                }
-            }
-
-            // Now for each of the red links let's remove some
-            Set<String> set = toMaintain.get(o.getOperationID());
-
-            if (set != null) {
-                red_edges.removeAll(set);
-                for (String to_remove : red_edges) {
-                    btg.removeEdge(o, operationIDS.get(to_remove));
-                }
-            }
-
-        }
-
-    }
-
-    /**
-     * Will return the edges that we must maintain
-     *
-     * @param sets - a list of sets
-     * @return - a set with the edges that we must maintain
-     */
-    private Set<String> my_method(List<Set<String>> sets) {
-        Set<String> initial_set = sets.get(0);
-        Set<String> return_set = initial_set;
-
-        for (int i = 1; i < sets.size(); i++) {
-            Set<String> s = sets.get(i);
-            if (!s.isEmpty()) {
-                return_set.removeAll(s);
-            }
-        }
-
-        return return_set;
-
     }
 
 }
