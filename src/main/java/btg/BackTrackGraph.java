@@ -65,11 +65,6 @@ public class BackTrackGraph {
     private Map<String, List<Annotation>> history;
 
     /**
-     * Indicates whether we're generating nominal or error call sequences.
-     */
-    private boolean nominal;
-
-    /**
      * Number of random operations in each sequence
      */
     private int rands;
@@ -83,38 +78,14 @@ public class BackTrackGraph {
     private int threshold;
     private int backtracks;
 
-
-    /**
-     * Prints all generated call sequences
-     * @param call_sequences    sequences to print
-     */
-    public void printCallSequences(List<List<Annotation>> call_sequences) {
-        int seq = 1;
-
-        for(List<Annotation> l : call_sequences) {
-            System.out.println("\ncall sequence #" + seq);
-
-            if(!nominal)
-                if (l.get(l.size() - 1).getStatus() == Status.NEGATIVE)
-                    printInformation(l);
-                else
-                    System.out.println("Did not break the threshold");
-            else
-                printInformation(l);
-
-            seq++;
-        }
-    }
-
     /**
      * Creates a Backtrack Graph.
      * @param spec          API extended specification
-     * @param nominal       nominal (true); error (false)
      * @param rands         number of randomly selected operations in a call sequence
      * @param sequences          number of different call sequences to generate
      * @param threshold     maximum number of backtracks allowed
      */
-    public BackTrackGraph(Specification spec, boolean nominal, int rands, int sequences, int threshold) {
+    public BackTrackGraph(Specification spec, int rands, int sequences, int threshold) {
         btg = new DefaultDirectedGraph<>(null, null, false);
         operationsURLs = new HashMap<>(100);
         operationsRequires = new HashMap<>(100);
@@ -122,7 +93,7 @@ public class BackTrackGraph {
         operationVerbs = new HashMap<>(100);
         history = new HashMap<>(100);
         postBag = new LinkedList<>();
-        this.nominal = nominal;
+        //this.nominal = nominal;
         this.rands = rands;
         this.sequences = sequences;
         this.threshold = threshold;
@@ -149,14 +120,39 @@ public class BackTrackGraph {
     }
 
     /**
+     * Prints all generated call sequences
+     * @param call_sequences    sequences to print
+     */
+    public void printCallSequences(List<List<Annotation>> call_sequences, boolean nominal) {
+        int seq = 1;
+
+        for(List<Annotation> l : call_sequences) {
+            System.out.println("\ncall sequence #" + seq);
+
+            if(!nominal)
+                if (l.get(l.size() - 1).getStatus() == Status.NEGATIVE)
+                    printInformation(l);
+                else
+                    System.out.println("Did not break the threshold");
+            else
+                printInformation(l);
+
+            seq++;
+        }
+    }
+
+    /**
      * Generates call sequences.
+     * @param nominal   indicates whether the sequences are nominal or faulty
      * @return call sequences
      */
-    public List<List<Annotation>> generateCallSequences() {
+    public List<List<Annotation>> generateCallSequences(boolean nominal) {
         List<List<Annotation>> call_sequences = new LinkedList<>();
 
         for (int i = 0; i < sequences; i++) {
-            List<Annotation> generated = generateSequence();
+            int seqnum = i+1;
+            System.out.println("\nrandoms for sequence #" + seqnum);
+            List<Annotation> generated = generateSequence(nominal);
             call_sequences.add(generated);
 
             // Wipe information for next sequence
@@ -217,25 +213,23 @@ public class BackTrackGraph {
 
     /**
      * Generates a single call sequence
+     * @param nominal   indicates whether the sequence is nominal or faulty
      * @return call sequence
      */
-    public List<Annotation> generateSequence() {
+    public List<Annotation> generateSequence(boolean nominal) {
         List<Annotation> toReturn = new LinkedList<>();
 
         for (int i = 0; i < rands; i++) {
             if (stop) break;
 
             Operation o = getRandomOperation();
-            System.out.println("random: " + o.getOperationID());
-            List<Annotation> resolved = resolve(o);
+            System.out.println(o.getOperationID());
+            List<Annotation> resolved = resolve(o, nominal);
 
             for(Annotation a : resolved)
                 toReturn.add(a);
 
         }
-
-        // TODO REMOVE
-        System.out.println("");
 
         return toReturn;
     }
@@ -515,40 +509,25 @@ public class BackTrackGraph {
         return return_set;
 
     }
-    
+
     /**
      *
-     * @param o - Operation received
+     * @param o         operation
+     * @param nominal   indicates whether the sequences are nominal or faulty
      *          In this method we will just decide what to do with
      *          the choices that we have. We will detect which
      *          operation it is and perform logic into it
      *          in order to append to the retrieved list
      */
-    private List<Annotation> resolve(Operation o) {
-
-        // usar switch mais fancy
+    private List<Annotation> resolve(Operation o, boolean nominal) {
         List<Annotation> sequence = new LinkedList<>();
+
         switch (o.getVerb()) {
-
-            case "POST":
-                sequence = copeWithPost(o);
-                break;
-
-            case "DELETE":
-                sequence = copeWithDelete(o);
-                break;
-
-            case "GET":
-                sequence = copeWithGet(o);
-                break;
-
-            case "PUT":
-                sequence = copeWithPut(o);
-                break;
-
-            default:
-                System.out.println("I did not match any of the operation verbs available");
-
+            case "POST" -> sequence = copeWithPost(o, nominal);
+            case "DELETE" -> sequence = copeWithDelete(o, nominal);
+            case "GET" -> sequence = copeWithGet(o, nominal);
+            case "PUT" -> sequence = copeWithPut(o, nominal);
+            default -> System.out.println("I did not match any of the operation verbs available");
         }
 
         return sequence;
@@ -556,11 +535,11 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the GET operations
-     *
-     * @param o - operation in question
-     * @return - a list of annotations
+     * @param o         GET operation
+     * @param nominal   indicates whether the sequences are nominal or faulty
+     * @return a list of annotations
      */
-    private List<Annotation> copeWithGet(Operation o) {
+    private List<Annotation> copeWithGet(Operation o, boolean nominal) {
 
         // Here we can have two scenarios , either we back track or not
         // If we do backtrack we will add things to the data structure
@@ -614,7 +593,6 @@ public class BackTrackGraph {
                     toReturn = new LinkedList<>();
                     append.setStatus(Status.NEGATIVE);
                     stop = true;
-
                 }
             }
 
@@ -644,11 +622,11 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the PUT operations
-     *
-     * @param o - operation in question
-     * @return - a list of annotations
+     * @param o         PUT operation
+     * @param nominal   indicates whether the sequences are nominal or faulty
+     * @return a list of annotations
      */
-    private List<Annotation> copeWithPut(Operation o) {
+    private List<Annotation> copeWithPut(Operation o, boolean nominal) {
 
         // Here we can have two scenarios , either we back track or not
         // If we do backtrack we will add things to the data structure
@@ -723,11 +701,11 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the DELETE operations
-     *
-     * @param o - operation in question
-     * @return - a list of annotations
+     * @param o         DELETE operation
+     * @param nominal   indicates whether the sequences are nominal or faulty
+     * @return a list of annotations
      */
-    private List<Annotation> copeWithDelete(Operation o) {
+    private List<Annotation> copeWithDelete(Operation o, boolean nominal) {
 
         // Let's see if we have uses
         Operation father = getCreator(o);
@@ -1076,11 +1054,11 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the POST operations
-     *
-     * @param o - operation in question
-     * @return - a list of annotations
+     * @param o         simple POST operation
+     * @param nominal   indicates whether the sequences are nominal or faulty
+     * @return a list of annotations
      */
-    private List<Annotation> copeWithPost(Operation o) {
+    private List<Annotation> copeWithPost(Operation o, boolean nominal) {
 
         Set<DefaultEdge> edge_set = btg.outgoingEdgesOf(o);
         boolean simple = true;
@@ -1097,7 +1075,7 @@ public class BackTrackGraph {
         }
         // compound POST
         else {
-            return copeWithCompoundPost(o);
+            return copeWithCompoundPost(o, nominal);
         }
     }
 
@@ -1132,10 +1110,11 @@ public class BackTrackGraph {
 
     /**
      * Deals with the compound posts
-     * @param o - operation
-     * @return - annotations for the sequence
+     * @param o         compound POST operation
+     * @param nominal   indicates whether the sequences are nominal or faulty
+     * @return  annotations for the sequence
      */
-    private List<Annotation> copeWithCompoundPost(Operation o) {
+    private List<Annotation> copeWithCompoundPost(Operation o, boolean nominal) {
 
         List<Annotation> list = history.get(o.getOperationID());
 

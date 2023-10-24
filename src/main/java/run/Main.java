@@ -1,5 +1,7 @@
 package run;
 
+import java.io.FileNotFoundException;
+import java.sql.SQLOutput;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -18,17 +20,29 @@ public class Main {
 
             // Parsing the specification file
             String file_loc = args[0];
-            boolean nominal = Integer.parseInt(args[1]) == 1;
-            int rands = Integer.parseInt(args[2]);
-            int seqs = Integer.parseInt(args[3]);
-            int threshold = Integer.parseInt(args[4]);
+            int randoms = Integer.parseInt(args[1]);
+            int sequences = Integer.parseInt(args[2]);
+            int threshold = Integer.parseInt(args[3]);
+
+            System.out.println("generation setup:");
+            System.out.println("  sequences = " + sequences);
+            System.out.println("  randoms   = " + randoms);
+            System.out.println("  threshold = " + threshold + "\n");
 
             Specification spec = Parser.parse(file_loc);
 
             // Building the graph and generating the sequences
-            BackTrackGraph btg = new BackTrackGraph(spec, nominal, rands, seqs, threshold);
-            List<List<Annotation>> call_sequences = btg.generateCallSequences();
-            btg.printCallSequences(call_sequences);
+            BackTrackGraph btg = new BackTrackGraph(spec, randoms, sequences, threshold);
+
+            // Nominal sequences
+            System.out.println("------------------ NOMINAL ------------------");
+            List<List<Annotation>> nominal = btg.generateCallSequences(true);
+            btg.printCallSequences(nominal, true);
+
+            // Faulty sequences
+            List<List<Annotation>> faulty = btg.generateCallSequences(false);
+            System.out.println("\n\n------------------ FAULTY  ------------------");
+            btg.printCallSequences(faulty, false);
 
             Instant end = Instant.now();
             long time = Duration.between(start, end).toMillis();
@@ -43,5 +57,8 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+
+
     }
 }
