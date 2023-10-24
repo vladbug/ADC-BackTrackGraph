@@ -7,6 +7,16 @@ of testing purposes.
 
 It's possible to generated nominal and faulty tests with this tool.
 
+## Compile 
+In the root directory:
+1. `mvn compile assembly:single`
+2. the generated fat jar is in the target directory
+
+## Run 
+1. `java -jar [path-to-extended-oas] [nr-randoms] [nr-sequences] [threshold]`
+
+
+
 # How to use it
 
 ## Nominal sequences
