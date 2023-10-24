@@ -1,13 +1,13 @@
 package odg;
 
+import extended_parser_domain.Link;
+import extended_parser_domain.Operation;
+import extended_parser_domain.Response;
 import odg.exceptions.VertexDoesNotExistException;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
-import parser_domain.Link;
-import parser_domain.Operation;
-import parser_domain.Response;
 
 import java.util.*;
 

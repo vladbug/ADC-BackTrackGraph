@@ -1,6 +1,6 @@
 package btg;
 
-import parser_domain.Operation;
+import extended_parser_domain.Operation;
 
 import java.util.*;
 

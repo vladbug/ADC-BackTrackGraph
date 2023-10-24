@@ -16,7 +16,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import parser_domain.*;
+import extended_parser_domain.*;
 
 public class BackTrackGraph {
 
