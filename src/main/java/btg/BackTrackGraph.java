@@ -26,6 +26,8 @@ public class BackTrackGraph {
      */
     private Graph<Operation, DefaultEdge> btg;
 
+    private Specification spec;
+
     /**
      * Operations by URL
      */
@@ -82,11 +84,12 @@ public class BackTrackGraph {
      * Creates a Backtrack Graph.
      * @param spec          API extended specification
      * @param rands         number of randomly selected operations in a call sequence
-     * @param sequences          number of different call sequences to generate
+     * @param sequences     number of different call sequences to generate
      * @param threshold     maximum number of backtracks allowed
      */
     public BackTrackGraph(Specification spec, int rands, int sequences, int threshold) {
         btg = new DefaultDirectedGraph<>(null, null, false);
+        this.spec = spec;
         operationsURLs = new HashMap<>(100);
         operationsRequires = new HashMap<>(100);
         operationIDS = new HashMap<>(100);
@@ -165,6 +168,30 @@ public class BackTrackGraph {
         }
 
         return call_sequences;
+    }
+
+    /**
+     * Generates different random sequences of with random size.
+     *
+     * @return list of operation ids.
+     */
+    public List<List<String>> generateRandomSequences() {
+        List<String> sequence = new ArrayList<>();
+        List<List<String>> randomSequences = new ArrayList<>();
+        int sequenceSize;
+        List<String> ops = new ArrayList<>(spec.getOperations().keySet());
+
+        for (int j = 0; j < sequences; j++) {
+            sequenceSize = new Random().nextInt(ops.size() + 1);
+            for (int i = 0; i < sequenceSize; i++)
+                sequence.add(ops.get(i));
+            Collections.shuffle(sequence);
+
+            if (!randomSequences.contains(sequence))
+                randomSequences.add(sequence);
+        }
+
+        return randomSequences;
     }
 
     /**
