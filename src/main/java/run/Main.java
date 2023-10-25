@@ -21,6 +21,10 @@ public class Main {
             int randoms = Integer.parseInt(args[1]);
             int sequences = Integer.parseInt(args[2]);
             int threshold = Integer.parseInt(args[3]);
+            // String file_loc = "src/main/resources/tournaments-magmact-extended.json";
+            // int randoms = 10;
+            // int sequences = 10;
+            // int threshold = 10;
 
             System.out.println("generation setup:");
             System.out.println("  sequences = " + sequences);
@@ -35,12 +39,17 @@ public class Main {
             // Nominal sequences
             System.out.println("------------------ NOMINAL ------------------");
             List<List<Annotation>> nominal = btg.generateCallSequences(true);
-            //btg.printCallSequences(nominal, true);
+            btg.printCallSequences(nominal, true);
 
             // Faulty sequences
-            List<List<Annotation>> faulty = btg.generateCallSequences(false);
             System.out.println("\n\n------------------ FAULTY  ------------------");
-            //btg.printCallSequences(faulty, false);
+            List<List<Annotation>> faulty = btg.generateCallSequences(false);
+            btg.printCallSequences(faulty, false);
+
+            // Random sequences
+            System.out.println("\n\n------------------ RANDOM  ------------------");
+            List<List<Annotation>> rand = btg.generateRandomSequences();
+            btg.printCallSequences(rand, true);
 
             Instant end = Instant.now();
             long time = Duration.between(start, end).toMillis();

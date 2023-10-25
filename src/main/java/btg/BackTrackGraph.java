@@ -171,30 +171,6 @@ public class BackTrackGraph {
     }
 
     /**
-     * Generates different random sequences of with random size.
-     *
-     * @return list of operation ids.
-     */
-    public List<List<String>> generateRandomSequences() {
-        List<String> sequence = new ArrayList<>();
-        List<List<String>> randomSequences = new ArrayList<>();
-        int sequenceSize;
-        List<String> ops = new ArrayList<>(spec.getOperations().keySet());
-
-        for (int j = 0; j < sequences; j++) {
-            sequenceSize = new Random().nextInt(ops.size() + 1);
-            for (int i = 0; i < sequenceSize; i++)
-                sequence.add(ops.get(i));
-            Collections.shuffle(sequence);
-
-            if (!randomSequences.contains(sequence))
-                randomSequences.add(sequence);
-        }
-
-        return randomSequences;
-    }
-
-    /**
      * Shows the structure of the whole graph with it's edges and vertices
      */
     public void iterateAllEdges() {
@@ -1416,5 +1392,53 @@ public class BackTrackGraph {
         }
         return parsed_requires;
     }
+
+    // -- ADDING SOME RANDOMNESS 
+
+
+    public List<List<Annotation>> generateRandomSequences() {
+            
+        List<List<Annotation>> toReturn = new LinkedList<>();
+
+        for (int i = 1; i <= this.sequences; i++) {
+            List<Annotation> sequence = generateRandomSequence();
+            toReturn.add(sequence);
+        }
+
+        return toReturn;
+}
+
+// Generates only one random sequence
+public List<Annotation> generateRandomSequence() {
+
+    List<Annotation> toReturn = new LinkedList<>();
+
+    for (int i = 1; i <= this.rands; i++) {
+        Operation o = getRandomOperation();
+        toReturn.add(generateAnnotation(o));
+    }
+
+    return toReturn;
+
+}
+
+// Generate a pseudo-random annotation for a given operation
+private Annotation generateAnnotation(Operation o) {
+    
+    int cardinality = new Random().nextInt(this.rands) + 1;
+    
+    // Generate a random number between 0 and 1
+    double rnd = new Random().nextDouble();
+
+    Status status = Status.UNAVAILABLE;
+    
+    if(rnd < 0.5) {
+        status = Status.AVAILABLE;
+    }
+    
+    Annotation a = new Annotation(o, status, cardinality);
+
+    return a;
+}
 
 }
