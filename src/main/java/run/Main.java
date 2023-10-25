@@ -35,22 +35,22 @@ public class Main {
             // Nominal sequences
             System.out.println("------------------ NOMINAL ------------------");
             List<List<Annotation>> nominal = btg.generateCallSequences(true);
-            btg.printCallSequences(nominal, true);
+            //btg.printCallSequences(nominal, true);
 
             // Faulty sequences
             List<List<Annotation>> faulty = btg.generateCallSequences(false);
             System.out.println("\n\n------------------ FAULTY  ------------------");
-            btg.printCallSequences(faulty, false);
+            //btg.printCallSequences(faulty, false);
 
             Instant end = Instant.now();
             long time = Duration.between(start, end).toMillis();
             long milliseconds = time;
             long minutes = (milliseconds / 1000) / 60;
             long seconds = (milliseconds / 1000) % 60;
-            System.out.println();
-            System.out.println(milliseconds + " Milliseconds = "
-                    + minutes + " minutes and "
-                    + seconds + " seconds.");
+//            System.out.println();
+//            System.out.println(milliseconds + " Milliseconds = "
+//                    + minutes + " minutes and "
+//                    + seconds + " seconds.");
 
         } catch (Exception e) {
             e.printStackTrace();

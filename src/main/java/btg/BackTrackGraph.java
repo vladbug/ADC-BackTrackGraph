@@ -151,7 +151,6 @@ public class BackTrackGraph {
 
         for (int i = 0; i < sequences; i++) {
             int seqnum = i+1;
-            System.out.println("\nrandoms for sequence #" + seqnum);
             List<Annotation> generated = generateSequence(nominal);
             call_sequences.add(generated);
 
@@ -223,7 +222,6 @@ public class BackTrackGraph {
             if (stop) break;
 
             Operation o = getRandomOperation();
-            System.out.println(o.getOperationID());
             List<Annotation> resolved = resolve(o, nominal);
 
             for(Annotation a : resolved)
@@ -233,6 +231,7 @@ public class BackTrackGraph {
 
         return toReturn;
     }
+
 
     /**
      * Generates the combinatory
@@ -299,18 +298,17 @@ public class BackTrackGraph {
      */
     private void printInformation(List<Annotation> info) {
         for (Annotation i : info) {
-            System.out.println(i.getOperation().getOperationID() + " "
-                    + "$" + i.getCardinality()
-                    + " STATUS: " + i.getStatus());
+            System.out.println(i.getOperation().getOperationID()
+                    + " $" + i.getCardinality()
+                    + " " + i.getStatus());
 
             if (i.hasArguments()) {
                 List<Annotation> args = i.getArguments();
-                System.out.println("Arguments: ");
 
                 for (Annotation args_i : args)
-                    System.out.println(args_i.getOperation().getOperationID()
-                            + " " + "$" + args_i.getCardinality()
-                            + " STATUS: " + args_i.getStatus());
+                    System.out.println("  - " + args_i.getOperation().getOperationID()
+                            + " $" + args_i.getCardinality()
+                            + " " + args_i.getStatus());
             }
         }
     }
