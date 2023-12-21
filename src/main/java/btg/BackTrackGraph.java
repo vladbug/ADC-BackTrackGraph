@@ -281,15 +281,15 @@ public class BackTrackGraph {
         List<Annotation> pre_3 = history.get("postEnrollment");
 
         for (Annotation i : pre_1) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getTag());
         }
         System.out.println("---------");
         for (Annotation i : pre_2) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getTag());
         }
         System.out.println("---------");
         for (Annotation i : pre_3) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getCardinality());
+            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getTag());
         }
         System.out.println("---------");
     }
@@ -302,7 +302,7 @@ public class BackTrackGraph {
     private void printInformation(List<Annotation> info) {
         for (Annotation i : info) {
             System.out.println(i.getOperation().getOperationID()
-                    + " $" + i.getCardinality()
+                    + " $" + i.getTag()
                     + " " + i.getStatus());
 
             if (i.hasArguments()) {
@@ -310,7 +310,7 @@ public class BackTrackGraph {
 
                 for (Annotation args_i : args)
                     System.out.println("  - " + args_i.getOperation().getOperationID()
-                            + " $" + args_i.getCardinality()
+                            + " $" + args_i.getTag()
                             + " " + args_i.getStatus());
             }
         }
@@ -614,7 +614,7 @@ public class BackTrackGraph {
             // And we already know wich one to use! Update the history
             Annotation info_to_get = history_list.get(position);
 
-            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getCardinality());
+            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag());
             List<Annotation> toReturn = List.of(to_return);
 
             return toReturn;
@@ -693,7 +693,7 @@ public class BackTrackGraph {
             // And we already know wich one to use! Update the history
             Annotation info_to_get = history_list.get(position);
 
-            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getCardinality());
+            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag());
             List<Annotation> toReturn = List.of(to_return);
 
             return toReturn;
@@ -784,7 +784,7 @@ public class BackTrackGraph {
                 Annotation info_to_delete = history_list.get(position);
                 info_to_delete.setStatus(Status.UNAVAILABLE);
 
-                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getCardinality());
+                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag());
                 List<Annotation> toReturn = List.of(to_return);
 
                 return toReturn;
@@ -850,7 +850,7 @@ public class BackTrackGraph {
 
                 Annotation info_to_delete = history_list.get(position);
                 // info_to_delete.setStatus(Status.UNAVAILABLE);
-                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getCardinality());
+                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag());
 
                 // Now let's check for it's uses!
                 Operation uses = spreadCorruption(info_to_delete);
@@ -903,7 +903,7 @@ public class BackTrackGraph {
         Set<DefaultEdge> edges = btg.incomingEdgesOf(i.getOperation());
         for (DefaultEdge e : edges) {
             if (btg.getEdgeSource(e).getVerb().equals("DELETE")) {
-                return new Annotation(btg.getEdgeSource(e), Status.UNAVAILABLE, i.getCardinality());
+                return new Annotation(btg.getEdgeSource(e), Status.UNAVAILABLE, i.getTag());
             }
         }
         return null;
@@ -1093,8 +1093,8 @@ public class BackTrackGraph {
 
         if (list.isEmpty()) {
             // First entry
-            int cardinality = 1;
-            Annotation i = new Annotation(o, status, cardinality);
+            int tag = 1;
+            Annotation i = new Annotation(o, status, tag);
             list.add(i);
             List<Annotation> toReturn = List.of(i);
             return toReturn;
@@ -1102,7 +1102,7 @@ public class BackTrackGraph {
 
             int index = list.size();
             Annotation last_info = list.get(index - 1);
-            Annotation i = new Annotation(o, status, last_info.getCardinality() + 1);
+            Annotation i = new Annotation(o, status, last_info.getTag() + 1);
             list.add(i);
             List<Annotation> toReturn = List.of(i);
             return toReturn;
@@ -1121,8 +1121,8 @@ public class BackTrackGraph {
 
         if (list.isEmpty()) {
             // First entry
-            int cardinality = 1;
-            Annotation i = new Annotation(o, Status.AVAILABLE, cardinality);
+            int tag = 1;
+            Annotation i = new Annotation(o, Status.AVAILABLE, tag);
             // Let's get it's arguments, and in here we might have 2 scenarios
             // where we have the arguments and where we don't and need to backtrack
             List<Annotation> result = getValidArguments(o);
@@ -1173,7 +1173,7 @@ public class BackTrackGraph {
 
             int index = list.size();
             Annotation last_info = list.get(index - 1);
-            Annotation i = new Annotation(o, Status.AVAILABLE, last_info.getCardinality() + 1);
+            Annotation i = new Annotation(o, Status.AVAILABLE, last_info.getTag() + 1);
 
             List<Annotation> result = getValidArguments(o);
 
@@ -1425,7 +1425,7 @@ public List<Annotation> generateRandomSequence() {
 // Generate a pseudo-random annotation for a given operation
 private Annotation generateAnnotation(Operation o) {
     
-    int cardinality = new Random().nextInt(this.rands) + 1;
+    int tag = new Random().nextInt(this.rands) + 1;
     
     // Generate a random number between 0 and 1
     double rnd = new Random().nextDouble();
@@ -1436,7 +1436,7 @@ private Annotation generateAnnotation(Operation o) {
         status = Status.AVAILABLE;
     }
     
-    Annotation a = new Annotation(o, status, cardinality);
+    Annotation a = new Annotation(o, status, tag);
 
     return a;
 }

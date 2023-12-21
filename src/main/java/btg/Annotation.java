@@ -5,23 +5,32 @@ import extended_parser_domain.Operation;
 import java.util.*;
 
 
+
 public class Annotation {
 
     private Operation operation;
 
     private Status status;
 
-    private int cardinality;
+    private int tag;
+
+    private int HASH_TABLE_SIZE = 97; // it's a prime number
 
     private List<Annotation> arguments; // not all of them will have these
 
 
-    public Annotation(Operation operation, Status status, int cardinality) {
+    public Annotation(Operation operation, Status status, int tag) {
         this.operation = operation;
         this.status = status;
-        this.cardinality = cardinality;
+        int hashed_value = this.hash(tag);
+        this.tag = hashed_value;
         arguments = new LinkedList<>();
 
+    }
+
+    // Knuth Variant on Division Method
+    private int hash(int tag) {
+        return (tag*(tag + 3)) % HASH_TABLE_SIZE;
     }
 
 
@@ -53,8 +62,8 @@ public class Annotation {
         status = new_s;
     }
 
-    public int getCardinality() {
-        return cardinality;
+    public int getTag() {
+        return tag;
     }
 
     @Override
@@ -63,7 +72,7 @@ public class Annotation {
         Annotation other = (Annotation) o;
 
         if(this.operation.getOperationID().equals(other.operation.getOperationID()) &&
-        this.cardinality == other.cardinality && this.status == other.status) {
+        this.tag == other.tag && this.status == other.status) {
             return true;
         }
 
