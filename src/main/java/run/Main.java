@@ -17,14 +17,14 @@ public class Main {
             Instant start = Instant.now();
 
             // Parsing the specification file
-            //String file_loc = args[0];
-            // int randoms = Integer.parseInt(args[1]);
-            // int sequences = Integer.parseInt(args[2]);
-            // int threshold = Integer.parseInt(args[3]);
-            String file_loc = "src/main/resources/tournaments-magmact-extended.json";
-            int randoms = 10;
-            int sequences = 10;
-            int threshold = 10;
+            String file_loc = args[0];
+            int randoms = Integer.parseInt(args[1]);
+            int sequences = Integer.parseInt(args[2]);
+            int threshold = Integer.parseInt(args[3]);
+            // String file_loc = "src/main/resources/tournaments-magmact-extended.json";
+            // int randoms = 10;
+            // int sequences = 10;
+            // int threshold = 10;
 
             System.out.println("generation setup:");
             System.out.println("  sequences = " + sequences);
