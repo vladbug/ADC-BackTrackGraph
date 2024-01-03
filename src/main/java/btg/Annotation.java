@@ -7,6 +7,7 @@ import java.util.*;
 
 
 public class Annotation {
+    private static final int HASH_TABLE_SIZE = 97; // it's a prime number
 
     private Operation operation;
 
@@ -14,23 +15,28 @@ public class Annotation {
 
     private int tag;
 
-    private int HASH_TABLE_SIZE = 97; // it's a prime number
-
     private List<Annotation> arguments; // not all of them will have these
 
 
     public Annotation(Operation operation, Status status, int tag) {
         this.operation = operation;
         this.status = status;
-        int hashed_value = this.hash(tag);
-        this.tag = hashed_value;
+        this.tag = tag;
         arguments = new LinkedList<>();
-
     }
 
     // Knuth Variant on Division Method
     private int hash(int tag) {
         return (tag*(tag + 3)) % HASH_TABLE_SIZE;
+    }
+
+    /**
+     * Hashing the tag and the operation id to make this annotation unique.
+     * @return hashed value.
+     */
+    public int  getHashedTag() {
+        String toHash = tag + operation.getOperationID();
+        return toHash.hashCode();
     }
 
 
