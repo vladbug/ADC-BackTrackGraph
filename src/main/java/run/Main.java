@@ -23,7 +23,7 @@ public class Main {
             int threshold = Integer.parseInt(args[3]);
             // String file_loc = "src/main/resources/tournaments-magmact-extended.json";
             // int randoms = 10;
-            // int sequences = 10;
+            // int sequences = 1;
             // int threshold = 10;
 
             System.out.println("generation setup:");

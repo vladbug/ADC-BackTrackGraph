@@ -25,6 +25,13 @@ public class Annotation {
         arguments = new LinkedList<>();
     }
 
+     public Annotation(Operation operation, Status status, int tag, boolean to_hash) {
+        this.operation = operation;
+        this.status = status;
+        this.tag = tag;
+        arguments = new LinkedList<>();
+    }
+
     // Knuth Variant on Division Method
     private int hash(int tag) {
         return (tag*(tag + 3)) % HASH_TABLE_SIZE;
@@ -70,6 +77,10 @@ public class Annotation {
 
     public int getTag() {
         return tag;
+    }
+
+    public void setTag(int new_tag) {
+        tag = new_tag;
     }
 
     @Override

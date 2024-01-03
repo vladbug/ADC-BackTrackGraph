@@ -225,6 +225,7 @@ public class BackTrackGraph {
             if (stop) break;
 
             Operation o = getRandomOperation();
+            System.out.println("The random operation is: " + o.getOperationID());
             List<Annotation> resolved = resolve(o, nominal);
 
             for(Annotation a : resolved)
@@ -558,7 +559,7 @@ public class BackTrackGraph {
         Annotation toGet = null;
         int position = 0;
 
-        // Get the first available POST for deletion
+        // Get the first available POST for getter
         for (Annotation info : history_list) {
             if (info.getStatus() == Status.AVAILABLE) {
                 toGet = info;
@@ -572,7 +573,7 @@ public class BackTrackGraph {
             // This mean that there is no available operation to do that
             // or simply the history_list is empty, this means
             // that we will have to backtrack! We must
-            // create an enrollment in order to delete it!
+            // create an enrollment in order to get it!
 
             // Now this cannot be that simples because in the new graph
             // we will have to explore until we reach "terminal" posts
@@ -583,11 +584,11 @@ public class BackTrackGraph {
             List<Annotation> toReturn;
 
             if (nominal) {
-                toReturn = backTrackPost(creator, needed);
+                toReturn = backTrackPost(creator, needed,append);
             } else {
                 // The option given is to create non-optimistic sequences
                 if (backtracks < threshold) {
-                    toReturn = backTrackPost(creator, needed);
+                    toReturn = backTrackPost(creator, needed,append);
                     backtracks++;
 
                 } else {
@@ -614,7 +615,9 @@ public class BackTrackGraph {
             // And we already know wich one to use! Update the history
             Annotation info_to_get = history_list.get(position);
 
-            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag());
+            // And we don't want to hash this again tho
+            // We will pass a no hash function!
+            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag(),false);
             List<Annotation> toReturn = List.of(to_return);
 
             return toReturn;
@@ -664,11 +667,11 @@ public class BackTrackGraph {
             List<Annotation> toReturn;
 
             if (nominal) {
-                toReturn = backTrackPost(creator, needed);
+                toReturn = backTrackPost(creator, needed,append);
             } else {
                 // The option given is to create non-optimistic sequences
                 if (backtracks < threshold) {
-                    toReturn = backTrackPost(creator, needed);
+                    toReturn = backTrackPost(creator, needed,append);
                     backtracks++;
                 } else {
                     toReturn = new LinkedList<>();
@@ -689,11 +692,11 @@ public class BackTrackGraph {
         } else {
             // This means that there is an available one
             // we do not need to backtrack
-
+            System.out.println("I have a tournament to update");
             // And we already know wich one to use! Update the history
             Annotation info_to_get = history_list.get(position);
 
-            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag());
+            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag(),false);
             List<Annotation> toReturn = List.of(to_return);
 
             return toReturn;
@@ -784,7 +787,8 @@ public class BackTrackGraph {
                 Annotation info_to_delete = history_list.get(position);
                 info_to_delete.setStatus(Status.UNAVAILABLE);
 
-                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag());
+                // Here we just want to use a hash that has already been created
+                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag(),false);
                 List<Annotation> toReturn = List.of(to_return);
 
                 return toReturn;
@@ -850,7 +854,7 @@ public class BackTrackGraph {
 
                 Annotation info_to_delete = history_list.get(position);
                 // info_to_delete.setStatus(Status.UNAVAILABLE);
-                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag());
+                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag(),false);
 
                 // Now let's check for it's uses!
                 Operation uses = spreadCorruption(info_to_delete);
@@ -1025,7 +1029,7 @@ public class BackTrackGraph {
         stack.push(i_root);
         needed.removeAll(List.of(getCreator(root)));
 
-        List<Annotation> backTrackedInfo = backTrackPost(getCreator(root), needed);
+        List<Annotation> backTrackedInfo = backTrackPost(getCreator(root), needed,i_root);
 
         // This is very important, update the data structure with the backtracked info!
         for (Annotation info_update : backTrackedInfo) {
@@ -1092,6 +1096,7 @@ public class BackTrackGraph {
         Status status = Status.AVAILABLE;
 
         if (list.isEmpty()) {
+            // DOESN'T DEPEND ON ANYTHING
             // First entry
             int tag = 1;
             Annotation i = new Annotation(o, status, tag);
@@ -1099,7 +1104,7 @@ public class BackTrackGraph {
             List<Annotation> toReturn = List.of(i);
             return toReturn;
         } else {
-
+            // DOESN'T DEPEND ON ANYTHING
             int index = list.size();
             Annotation last_info = list.get(index - 1);
             Annotation i = new Annotation(o, status, last_info.getTag() + 1);
@@ -1116,7 +1121,7 @@ public class BackTrackGraph {
      * @return  annotations for the sequence
      */
     private List<Annotation> copeWithCompoundPost(Operation o, boolean nominal) {
-
+        // DOESN'T DEPENDE ON ANYTHING!
         List<Annotation> list = history.get(o.getOperationID());
 
         if (list.isEmpty()) {
@@ -1143,7 +1148,7 @@ public class BackTrackGraph {
                 List<Annotation> toReturn;
                 if (nominal) {
 
-                    List<Annotation> backtracked = backTrackPost(o, needed);
+                    List<Annotation> backtracked = backTrackPost(o, needed,null);
                     for (Annotation info_update : backtracked) {
                         List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
                         info_op.add(info_update);
@@ -1151,7 +1156,7 @@ public class BackTrackGraph {
                     toReturn = backtracked;
                 } else {
                     if (backtracks < threshold) {
-                        List<Annotation> backtracked = backTrackPost(o, needed);
+                        List<Annotation> backtracked = backTrackPost(o, needed,null);
                         for (Annotation info_update : backtracked) {
                             List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
                             info_op.add(info_update);
@@ -1192,7 +1197,7 @@ public class BackTrackGraph {
                 List<Operation> needed = needed(o);
                 List<Annotation> toReturn;
                 if (nominal) {
-                    List<Annotation> backtracked = backTrackPost(o, needed);
+                    List<Annotation> backtracked = backTrackPost(o, needed,null);
                     for (Annotation info_update : backtracked) {
                         List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
                         info_op.add(info_update);
@@ -1201,7 +1206,7 @@ public class BackTrackGraph {
 
                 } else {
                     if (backtracks < threshold) {
-                        List<Annotation> backtracked = backTrackPost(o, needed);
+                        List<Annotation> backtracked = backTrackPost(o, needed,null);
                         for (Annotation info_update : backtracked) {
                             List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
                             info_op.add(info_update);
@@ -1298,7 +1303,8 @@ public class BackTrackGraph {
      * @param needed - operations that it neeeds
      * @return - annotations backtracked
      */
-    private List<Annotation> backTrackPost(Operation root, List<Operation> needed) {
+    private List<Annotation> backTrackPost(Operation root, List<Operation> needed, Annotation caller) {
+        // DOENS'T DEPEND ON ANYTHING! -> false
         // We already know the operations that we have to back-track
         // Let's change this method to be able to be used in
         // simple posts and compound posts
@@ -1316,9 +1322,41 @@ public class BackTrackGraph {
 
         // I had to do this in order for the delete to work
         if (simple) {
-            Annotation new_info = new Annotation(root, Status.AVAILABLE, history.get(root.getOperationID()).size() + 1);
+            Annotation new_info = new Annotation(root, Status.AVAILABLE, caller.getTag(), false);
             toReturn = List.of(new_info);
-        } else {
+        }
+
+        // else if(caller.getOperation().getVerb().equals("GET")) {
+        //     Annotation new_info = new Annotation(root, Status.AVAILABLE, caller.getTag(), false);
+        //     toReturn = List.of(new_info);
+        // }
+        
+        else if ((caller != null && caller.getOperation().getVerb().equals("GET")) 
+        || (caller != null && caller.getOperation().getVerb().equals("DELETE")) 
+        || (caller != null && caller.getOperation().getVerb().equals("PUT"))) {
+            Stack<Annotation> stack = new Stack<>();
+            List<Annotation> list_root = history.get(root.getOperationID());
+            Annotation i_root = new Annotation(root, Status.AVAILABLE, caller.getTag(), false);
+
+            for (Operation o : needed) {
+                Annotation i_father = new Annotation(o, Status.AVAILABLE, history.get(o.getOperationID()).size() + 1);
+                i_root.addArgument(i_father);
+            }
+
+            stack.push(i_root);
+
+            // Now let's put into the stack the operations that it needs
+            for (Operation o : needed) {
+                List<Annotation> list_op = history.get(o.getOperationID());
+                Annotation i = new Annotation(o, Status.AVAILABLE, list_op.size() + 1);
+                stack.push(i);
+            }
+
+            while (!stack.isEmpty())
+                toReturn.add(stack.pop());
+        }
+
+        else {
             Stack<Annotation> stack = new Stack<>();
             List<Annotation> list_root = history.get(root.getOperationID());
             Annotation i_root = new Annotation(root, Status.AVAILABLE, list_root.size() + 1);
