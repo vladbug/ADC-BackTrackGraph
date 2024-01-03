@@ -21,7 +21,7 @@ public class Annotation {
     public Annotation(Operation operation, Status status, int tag) {
         this.operation = operation;
         this.status = status;
-        this.tag = tag;
+        this.tag = getHashedTag(tag);
         arguments = new LinkedList<>();
     }
 
@@ -34,7 +34,7 @@ public class Annotation {
      * Hashing the tag and the operation id to make this annotation unique.
      * @return hashed value.
      */
-    public int  getHashedTag() {
+    private int getHashedTag(int tag) {
         String toHash = tag + operation.getOperationID();
         return toHash.hashCode();
     }
