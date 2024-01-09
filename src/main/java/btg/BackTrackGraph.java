@@ -225,7 +225,7 @@ public class BackTrackGraph {
             if (stop) break;
 
             Operation o = getRandomOperation();
-            System.out.println("The random operation is: " + o.getOperationID());
+            //System.out.println("The random operation is: " + o.getOperationID());
             List<Annotation> resolved = resolve(o, nominal);
 
             for(Annotation a : resolved)
@@ -529,6 +529,7 @@ public class BackTrackGraph {
             case "DELETE" -> sequence = copeWithDelete(o, nominal);
             case "GET" -> sequence = copeWithGet(o, nominal);
             case "PUT" -> sequence = copeWithPut(o, nominal);
+            // TODO @vladbug exceptions!!!
             default -> System.out.println("I did not match any of the operation verbs available");
         }
 
@@ -692,7 +693,7 @@ public class BackTrackGraph {
         } else {
             // This means that there is an available one
             // we do not need to backtrack
-            System.out.println("I have a tournament to update");
+            //System.out.println("I have a tournament to update");
             // And we already know wich one to use! Update the history
             Annotation info_to_get = history_list.get(position);
 
