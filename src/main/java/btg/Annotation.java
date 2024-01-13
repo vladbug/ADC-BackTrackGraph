@@ -33,6 +33,7 @@ public class Annotation {
     }
 
     // Knuth Variant on Division Method
+    // DEPRECATED
     private int hash(int tag) {
         return (tag*(tag + 3)) % HASH_TABLE_SIZE;
     }

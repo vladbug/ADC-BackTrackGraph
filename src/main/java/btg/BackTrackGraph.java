@@ -223,17 +223,41 @@ public class BackTrackGraph {
 
         for (int i = 0; i < rands; i++) {
             if (stop) break;
-
             Operation o = getRandomOperation();
             //System.out.println("The random operation is: " + o.getOperationID());
             List<Annotation> resolved = resolve(o, nominal);
 
             for(Annotation a : resolved)
                 toReturn.add(a);
-
         }
 
+        filterSequence(toReturn);
+
         return toReturn;
+    }
+
+    /**
+     *  I will perform something called "aldrabar". After the exams I will implement
+     * the indexes if necessary because the indexation logic would change a lot of things in
+     * the BTG algorithm as a whole.
+     * In order to create a "timeline" I detected a pattern. The only thing that causes problems 
+     * are the POST operations. Therefore a filter in the resulting sequence would solve the problem.
+     * I know in terms of computation it's heavier BUT. O(n) + O(n) = O(2N) = O(N) :)
+     * @param lists
+     * @return
+     */
+    public List<Annotation> filterSequence(List<Annotation> toFilter) {
+        for(Annotation a : toFilter) {
+            if(a.getOperation().getVerb().equals("POST")) {
+                // This is a post operation
+                if(a.getStatus() == Status.UNAVAILABLE) {
+                    // Then we want to turn it into available
+                    a.setStatus(Status.AVAILABLE);
+                }
+            }
+        }
+
+        return toFilter;
     }
 
 
