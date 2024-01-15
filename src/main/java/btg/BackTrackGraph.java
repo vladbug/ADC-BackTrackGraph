@@ -243,7 +243,7 @@ public class BackTrackGraph {
      * In order to create a "timeline" I detected a pattern. The only thing that causes problems 
      * are the POST operations. Therefore a filter in the resulting sequence would solve the problem.
      * I know in terms of computation it's heavier BUT. O(n) + O(n) = O(2N) = O(N) :)
-     * @param lists
+     * @param toFilter
      * @return
      */
     public List<Annotation> filterSequence(List<Annotation> toFilter) {
@@ -330,8 +330,8 @@ public class BackTrackGraph {
                     + " $" + i.getTag()
                     + " " + i.getStatus());
 
-            if (i.hasArguments()) {
-                List<Annotation> args = i.getArguments();
+            if (i.hasDependencies()) {
+                List<Annotation> args = i.getDependencies();
 
                 for (Annotation args_i : args)
                     System.out.println("  - " + args_i.getOperation().getOperationID()
@@ -968,8 +968,8 @@ public class BackTrackGraph {
             List<Annotation> child_list = history.get(o.getOperationID());
             // Let's iterate it all and find the ones that might be in use
             for (Annotation i : child_list) {
-                if (i.hasArguments()) {
-                    List<Annotation> arguments = i.getArguments();
+                if (i.hasDependencies()) {
+                    List<Annotation> arguments = i.getDependencies();
                     if (arguments.contains(info_of_deletion) && (i.getStatus() != Status.UNAVAILABLE)) {
                         // This means it will be corrupted so we need to delete it also!
                         i.setStatus(Status.CORRUPTED);
@@ -1065,8 +1065,8 @@ public class BackTrackGraph {
         Collections.reverse(backTrackedInfo); // we must do this cause if we don't we lose the effect of the stack
 
         for (Annotation i : backTrackedInfo) {
-            if (i.hasArguments()) {
-                List<Annotation> args = i.getArguments();
+            if (i.hasDependencies()) {
+                List<Annotation> args = i.getDependencies();
                 for (Annotation i_args : args) {
                     i_args.setStatus(Status.UNAVAILABLE);
                 }
@@ -1160,7 +1160,7 @@ public class BackTrackGraph {
             if (result != null) {
                 // Re-using existent ones
                 for (Annotation info : result) {
-                    i.addArgument(info);
+                    i.addDependency(info);
                 }
 
                 list.add(i);
@@ -1211,7 +1211,7 @@ public class BackTrackGraph {
 
                 // Re-using existent ones
                 for (Annotation info : result) {
-                    i.addArgument(info);
+                    i.addDependency(info);
                 }
 
                 list.add(i);
@@ -1307,8 +1307,8 @@ public class BackTrackGraph {
         for (List<Annotation> list : result) {
             int counter = 0;
             for (Annotation i : my_list) {
-                if (!i.hasTheSameArguments(list)
-                        || (i.getStatus() == Status.UNAVAILABLE && i.hasTheSameArguments(list))) {
+                if (!i.hasTheSameDependencies(list)
+                        || (i.getStatus() == Status.UNAVAILABLE && i.hasTheSameDependencies(list))) {
                     counter++;
                 }
             }
@@ -1365,7 +1365,7 @@ public class BackTrackGraph {
 
             for (Operation o : needed) {
                 Annotation i_father = new Annotation(o, Status.AVAILABLE, history.get(o.getOperationID()).size() + 1);
-                i_root.addArgument(i_father);
+                i_root.addDependency(i_father);
             }
 
             stack.push(i_root);
@@ -1388,7 +1388,7 @@ public class BackTrackGraph {
 
             for (Operation o : needed) {
                 Annotation i_father = new Annotation(o, Status.AVAILABLE, history.get(o.getOperationID()).size() + 1);
-                i_root.addArgument(i_father);
+                i_root.addDependency(i_father);
             }
 
             stack.push(i_root);

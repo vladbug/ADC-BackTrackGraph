@@ -15,21 +15,21 @@ public class Annotation {
 
     private int tag;
 
-    private List<Annotation> arguments; // not all of them will have these
+    private List<Annotation> dependencies; // not all of them will have these
 
 
     public Annotation(Operation operation, Status status, int tag) {
         this.operation = operation;
         this.status = status;
         this.tag = getHashedTag(tag);
-        arguments = new LinkedList<>();
+        dependencies = new LinkedList<>();
     }
 
      public Annotation(Operation operation, Status status, int tag, boolean to_hash) {
         this.operation = operation;
         this.status = status;
         this.tag = tag;
-        arguments = new LinkedList<>();
+         dependencies = new LinkedList<>();
     }
 
     // Knuth Variant on Division Method
@@ -48,20 +48,20 @@ public class Annotation {
     }
 
 
-    public void addArgument(Annotation i) {
-        arguments.add(i);
+    public void addDependency(Annotation i) {
+        dependencies.add(i);
     }
 
-    public List<Annotation> getArguments() {
-        return arguments;
+    public List<Annotation> getDependencies() {
+        return dependencies;
     }
 
-    public boolean hasArguments() {
-        return arguments.size() > 0;
+    public boolean hasDependencies() {
+        return !dependencies.isEmpty();
     }
 
-    public boolean hasTheSameArguments(List<Annotation> list) {
-        return arguments.equals(list);
+    public boolean hasTheSameDependencies(List<Annotation> list) {
+        return dependencies.equals(list);
     }
 
     public Operation getOperation() {
@@ -84,19 +84,15 @@ public class Annotation {
         tag = new_tag;
     }
 
+
     @Override
-    public boolean equals(Object o) {
-        
+    public boolean equals (Object o) {
         Annotation other = (Annotation) o;
 
-        if(this.operation.getOperationID().equals(other.operation.getOperationID()) &&
-        this.tag == other.tag && this.status == other.status) {
-            return true;
-        }
+        String opId = operation.getOperationID();
+        String otherId = other.getOperation().getOperationID();
 
-        return false;
+        return opId.equals(otherId) && tag == other.getTag() && status == other.getStatus();
     }
-
-    
     
 }
