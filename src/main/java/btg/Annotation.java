@@ -94,5 +94,5 @@ public class Annotation {
 
         return opId.equals(otherId) && tag == other.getTag() && status == other.getStatus();
     }
-    
+
 }
