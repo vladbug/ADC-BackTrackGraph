@@ -2,12 +2,11 @@ package btg;
 
 import extended_parser_domain.Operation;
 
-import java.util.*;
-
+import java.util.LinkedList;
+import java.util.List;
 
 
 public class Annotation {
-    private static final int HASH_TABLE_SIZE = 97; // it's a prime number
 
     private Operation operation;
 
@@ -15,7 +14,8 @@ public class Annotation {
 
     private int tag;
 
-    private List<Annotation> dependencies; // not all of them will have these
+    // Not all operations have dependencies; this could always be an empty list.
+    private List<Annotation> dependencies;
 
 
     public Annotation(Operation operation, Status status, int tag) {
@@ -25,21 +25,17 @@ public class Annotation {
         dependencies = new LinkedList<>();
     }
 
-     public Annotation(Operation operation, Status status, int tag, boolean to_hash) {
+    public Annotation(Operation operation, Status status, int tag, boolean to_hash) {
         this.operation = operation;
         this.status = status;
         this.tag = tag;
-         dependencies = new LinkedList<>();
+        dependencies = new LinkedList<>();
     }
 
-    // Knuth Variant on Division Method
-    // DEPRECATED
-    private int hash(int tag) {
-        return (tag*(tag + 3)) % HASH_TABLE_SIZE;
-    }
 
     /**
      * Hashing the tag and the operation id to make this annotation unique.
+     *
      * @return hashed value.
      */
     private int getHashedTag(int tag) {
@@ -47,50 +43,76 @@ public class Annotation {
         return toHash.hashCode();
     }
 
-
-    public void addDependency(Annotation i) {
-        dependencies.add(i);
+    /**
+     * Adds a dependency.
+     *
+     * @param dependency annotation dependency.
+     */
+    public void addDependency(Annotation dependency) {
+        dependencies.add(dependency);
     }
 
     public List<Annotation> getDependencies() {
         return dependencies;
     }
 
+    /**
+     * Checks whether the annotation depends on other operations.
+     *
+     * @return true if it has dependencies; false otherwise.
+     */
     public boolean hasDependencies() {
         return !dependencies.isEmpty();
     }
 
+    /**
+     * Checks whether a dependency list is the same as this annotation.
+     *
+     * @param list dependency list.
+     * @return true when the dependency lists are equal; false otherwise.
+     * @pre hasDependencies()
+     */
     public boolean hasTheSameDependencies(List<Annotation> list) {
         return dependencies.equals(list);
-    }
-
-    public Operation getOperation() {
-        return operation;
     }
 
     public Status getStatus() {
         return status;
     }
 
-    public void setStatus(Status new_s) {
-        status = new_s;
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public int getTag() {
         return tag;
     }
 
-    public void setTag(int new_tag) {
-        tag = new_tag;
+    public void setTag(int value) {
+        tag = value;
     }
 
+    public String getOperationId() {
+        return operation.getOperationID();
+    }
+
+    public String getOperationVerb() {
+        return operation.getVerb();
+    }
+
+    public Operation getOperation() {
+        return operation;
+    }
 
     @Override
-    public boolean equals (Object o) {
+    public boolean equals(Object o) {
+        if (getClass() != o.getClass())
+            return false;
+
         Annotation other = (Annotation) o;
 
-        String opId = operation.getOperationID();
-        String otherId = other.getOperation().getOperationID();
+        String opId = getOperationId();
+        String otherId = other.getOperationId();
 
         return opId.equals(otherId) && tag == other.getTag() && status == other.getStatus();
     }

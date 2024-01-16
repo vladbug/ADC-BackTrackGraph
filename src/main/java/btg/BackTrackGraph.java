@@ -45,7 +45,6 @@ public class BackTrackGraph {
 
     /**
      * This map will map the VERB of the operation to the operation
-     *
      */
     private Map<Operation, String> operationVerbs;
 
@@ -58,7 +57,7 @@ public class BackTrackGraph {
      * This is the new version of the postBag
      * It is more advanced and has a lot more information
      * I'm gonna name it : history
-     *
+     * <p>
      * It will map an operationID into another map
      * with cardinalities and statusses of things
      * This map will only cover ther POST
@@ -82,10 +81,11 @@ public class BackTrackGraph {
 
     /**
      * Creates a Backtrack Graph.
-     * @param spec          API extended specification
-     * @param rands         number of randomly selected operations in a call sequence
-     * @param sequences     number of different call sequences to generate
-     * @param threshold     maximum number of backtracks allowed
+     *
+     * @param spec      API extended specification
+     * @param rands     number of randomly selected operations in a call sequence
+     * @param sequences number of different call sequences to generate
+     * @param threshold maximum number of backtracks allowed
      */
     public BackTrackGraph(Specification spec, int rands, int sequences, int threshold) {
         btg = new DefaultDirectedGraph<>(null, null, false);
@@ -124,15 +124,16 @@ public class BackTrackGraph {
 
     /**
      * Prints all generated call sequences
-     * @param call_sequences    sequences to print
+     *
+     * @param call_sequences sequences to print
      */
     public void printCallSequences(List<List<Annotation>> call_sequences, boolean nominal) {
         int seq = 1;
 
-        for(List<Annotation> l : call_sequences) {
+        for (List<Annotation> l : call_sequences) {
             System.out.println("\ncall sequence #" + seq);
 
-            if(!nominal)
+            if (!nominal)
                 if (l.get(l.size() - 1).getStatus() == Status.NEGATIVE)
                     printInformation(l);
                 else
@@ -146,14 +147,15 @@ public class BackTrackGraph {
 
     /**
      * Generates call sequences.
-     * @param nominal   indicates whether the sequences are nominal or faulty
+     *
+     * @param nominal indicates whether the sequences are nominal or faulty
      * @return call sequences
      */
     public List<List<Annotation>> generateCallSequences(boolean nominal) {
         List<List<Annotation>> call_sequences = new LinkedList<>();
 
         for (int i = 0; i < sequences; i++) {
-            int seqnum = i+1;
+            int seqnum = i + 1;
             List<Annotation> generated = generateSequence(nominal);
             call_sequences.add(generated);
 
@@ -187,20 +189,14 @@ public class BackTrackGraph {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> "
                         + o_target.getOperationID() + " and I am self edged");
 
-            }
-
-            else if (e instanceof BlueEdge) {
+            } else if (e instanceof BlueEdge) {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> "
                         + o_target.getOperationID() + " and I am linked edged");
 
-            }
-
-            else if (e instanceof RedEdge) {
+            } else if (e instanceof RedEdge) {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> "
                         + o_target.getOperationID() + " and I am timed edged");
-            }
-
-            else if (e instanceof GreenEdge) {
+            } else if (e instanceof GreenEdge) {
                 System.out.println("This is the edge from: " + o_source.getOperationID() + " ----> "
                         + o_target.getOperationID() + " and I am yellow edged");
 
@@ -215,7 +211,8 @@ public class BackTrackGraph {
 
     /**
      * Generates a single call sequence
-     * @param nominal   indicates whether the sequence is nominal or faulty
+     *
+     * @param nominal indicates whether the sequence is nominal or faulty
      * @return call sequence
      */
     public List<Annotation> generateSequence(boolean nominal) {
@@ -227,7 +224,7 @@ public class BackTrackGraph {
             //System.out.println("The random operation is: " + o.getOperationID());
             List<Annotation> resolved = resolve(o, nominal);
 
-            for(Annotation a : resolved)
+            for (Annotation a : resolved)
                 toReturn.add(a);
         }
 
@@ -237,20 +234,21 @@ public class BackTrackGraph {
     }
 
     /**
-     *  I will perform something called "aldrabar". After the exams I will implement
+     * I will perform something called "aldrabar". After the exams I will implement
      * the indexes if necessary because the indexation logic would change a lot of things in
      * the BTG algorithm as a whole.
-     * In order to create a "timeline" I detected a pattern. The only thing that causes problems 
+     * In order to create a "timeline" I detected a pattern. The only thing that causes problems
      * are the POST operations. Therefore a filter in the resulting sequence would solve the problem.
      * I know in terms of computation it's heavier BUT. O(n) + O(n) = O(2N) = O(N) :)
+     *
      * @param toFilter
      * @return
      */
     public List<Annotation> filterSequence(List<Annotation> toFilter) {
-        for(Annotation a : toFilter) {
-            if(a.getOperation().getVerb().equals("POST")) {
+        for (Annotation a : toFilter) {
+            if (a.getOperationVerb().equals("POST")) {
                 // This is a post operation
-                if(a.getStatus() == Status.UNAVAILABLE) {
+                if (a.getStatus() == Status.UNAVAILABLE) {
                     // Then we want to turn it into available
                     a.setStatus(Status.AVAILABLE);
                 }
@@ -263,6 +261,7 @@ public class BackTrackGraph {
 
     /**
      * Generates the combinatory
+     *
      * @param lists
      * @return - return the combinatory
      */
@@ -306,15 +305,15 @@ public class BackTrackGraph {
         List<Annotation> pre_3 = history.get("postEnrollment");
 
         for (Annotation i : pre_1) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getTag());
+            System.out.println(i.getStatus() + i.getOperationId() + i.getTag());
         }
         System.out.println("---------");
         for (Annotation i : pre_2) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getTag());
+            System.out.println(i.getStatus() + i.getOperationId() + i.getTag());
         }
         System.out.println("---------");
         for (Annotation i : pre_3) {
-            System.out.println(i.getStatus() + i.getOperation().getOperationID() + i.getTag());
+            System.out.println(i.getStatus() + i.getOperationId() + i.getTag());
         }
         System.out.println("---------");
     }
@@ -326,17 +325,13 @@ public class BackTrackGraph {
      */
     private void printInformation(List<Annotation> info) {
         for (Annotation i : info) {
-            System.out.println(i.getOperation().getOperationID()
-                    + " $" + i.getTag()
-                    + " " + i.getStatus());
+            System.out.println(i.getOperationId() + " $" + i.getTag() + " " + i.getStatus());
 
             if (i.hasDependencies()) {
                 List<Annotation> args = i.getDependencies();
 
                 for (Annotation args_i : args)
-                    System.out.println("  - " + args_i.getOperation().getOperationID()
-                            + " $" + args_i.getTag()
-                            + " " + args_i.getStatus());
+                    System.out.println("  - " + args_i.getOperationId() + " $" + args_i.getTag() + " " + args_i.getStatus());
             }
         }
     }
@@ -537,13 +532,12 @@ public class BackTrackGraph {
     }
 
     /**
-     *
-     * @param o         operation
-     * @param nominal   indicates whether the sequences are nominal or faulty
-     *          In this method we will just decide what to do with
-     *          the choices that we have. We will detect which
-     *          operation it is and perform logic into it
-     *          in order to append to the retrieved list
+     * @param o       operation
+     * @param nominal indicates whether the sequences are nominal or faulty
+     *                In this method we will just decide what to do with
+     *                the choices that we have. We will detect which
+     *                operation it is and perform logic into it
+     *                in order to append to the retrieved list
      */
     private List<Annotation> resolve(Operation o, boolean nominal) {
         List<Annotation> sequence = new LinkedList<>();
@@ -562,8 +556,9 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the GET operations
-     * @param o         GET operation
-     * @param nominal   indicates whether the sequences are nominal or faulty
+     *
+     * @param o       GET operation
+     * @param nominal indicates whether the sequences are nominal or faulty
      * @return a list of annotations
      */
     private List<Annotation> copeWithGet(Operation o, boolean nominal) {
@@ -609,11 +604,11 @@ public class BackTrackGraph {
             List<Annotation> toReturn;
 
             if (nominal) {
-                toReturn = backTrackPost(creator, needed,append);
+                toReturn = backTrackPost(creator, needed, append);
             } else {
                 // The option given is to create non-optimistic sequences
                 if (backtracks < threshold) {
-                    toReturn = backTrackPost(creator, needed,append);
+                    toReturn = backTrackPost(creator, needed, append);
                     backtracks++;
 
                 } else {
@@ -624,7 +619,7 @@ public class BackTrackGraph {
             }
 
             for (Annotation info_update : toReturn) {
-                List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
+                List<Annotation> info_op = history.get(info_update.getOperationId());
                 info_op.add(info_update);
             }
 
@@ -642,7 +637,7 @@ public class BackTrackGraph {
 
             // And we don't want to hash this again tho
             // We will pass a no hash function!
-            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag(),false);
+            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag(), false);
             List<Annotation> toReturn = List.of(to_return);
 
             return toReturn;
@@ -651,8 +646,9 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the PUT operations
-     * @param o         PUT operation
-     * @param nominal   indicates whether the sequences are nominal or faulty
+     *
+     * @param o       PUT operation
+     * @param nominal indicates whether the sequences are nominal or faulty
      * @return a list of annotations
      */
     private List<Annotation> copeWithPut(Operation o, boolean nominal) {
@@ -692,11 +688,11 @@ public class BackTrackGraph {
             List<Annotation> toReturn;
 
             if (nominal) {
-                toReturn = backTrackPost(creator, needed,append);
+                toReturn = backTrackPost(creator, needed, append);
             } else {
                 // The option given is to create non-optimistic sequences
                 if (backtracks < threshold) {
-                    toReturn = backTrackPost(creator, needed,append);
+                    toReturn = backTrackPost(creator, needed, append);
                     backtracks++;
                 } else {
                     toReturn = new LinkedList<>();
@@ -706,7 +702,7 @@ public class BackTrackGraph {
             }
 
             for (Annotation info_update : toReturn) {
-                List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
+                List<Annotation> info_op = history.get(info_update.getOperationId());
                 info_op.add(info_update);
             }
 
@@ -721,7 +717,7 @@ public class BackTrackGraph {
             // And we already know wich one to use! Update the history
             Annotation info_to_get = history_list.get(position);
 
-            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag(),false);
+            Annotation to_return = new Annotation(o, Status.AVAILABLE, info_to_get.getTag(), false);
             List<Annotation> toReturn = List.of(to_return);
 
             return toReturn;
@@ -730,8 +726,9 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the DELETE operations
-     * @param o         DELETE operation
-     * @param nominal   indicates whether the sequences are nominal or faulty
+     *
+     * @param o       DELETE operation
+     * @param nominal indicates whether the sequences are nominal or faulty
      * @return a list of annotations
      */
     private List<Annotation> copeWithDelete(Operation o, boolean nominal) {
@@ -813,7 +810,7 @@ public class BackTrackGraph {
                 info_to_delete.setStatus(Status.UNAVAILABLE);
 
                 // Here we just want to use a hash that has already been created
-                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag(),false);
+                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag(), false);
                 List<Annotation> toReturn = List.of(to_return);
 
                 return toReturn;
@@ -879,7 +876,7 @@ public class BackTrackGraph {
 
                 Annotation info_to_delete = history_list.get(position);
                 // info_to_delete.setStatus(Status.UNAVAILABLE);
-                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag(),false);
+                Annotation to_return = new Annotation(o, Status.UNAVAILABLE, info_to_delete.getTag(), false);
 
                 // Now let's check for it's uses!
                 Operation uses = spreadCorruption(info_to_delete);
@@ -902,6 +899,7 @@ public class BackTrackGraph {
      * This will retrieve the sequence that we must do the cascade deletion
      * update the data structure and retrieve it
      * //@param toDelete
+     *
      * @return
      */
     private List<Annotation> cascadeDelete(Operation o_corrupted) {
@@ -924,6 +922,7 @@ public class BackTrackGraph {
 
     /**
      * This will extract a delete operation from the corresponding POST
+     *
      * @param i
      * @return
      */
@@ -940,6 +939,7 @@ public class BackTrackGraph {
 
     /**
      * Spread the corruption among the operations
+     *
      * @param info_of_deletion
      * @return
      */
@@ -1005,6 +1005,7 @@ public class BackTrackGraph {
 
     /**
      * Gets the needed operations of a certain operation
+     *
      * @param o - operation
      * @return - operations the it needs
      */
@@ -1041,7 +1042,8 @@ public class BackTrackGraph {
 
     /**
      * Does the backtrack logic for the delete operation.
-     * @param root - starting node of the the backtrack
+     *
+     * @param root   - starting node of the the backtrack
      * @param needed - operations that it needs
      * @return - return the annotations that it backtracked
      */
@@ -1054,11 +1056,11 @@ public class BackTrackGraph {
         stack.push(i_root);
         needed.removeAll(List.of(getCreator(root)));
 
-        List<Annotation> backTrackedInfo = backTrackPost(getCreator(root), needed,i_root);
+        List<Annotation> backTrackedInfo = backTrackPost(getCreator(root), needed, i_root);
 
         // This is very important, update the data structure with the backtracked info!
         for (Annotation info_update : backTrackedInfo) {
-            List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
+            List<Annotation> info_op = history.get(info_update.getOperationId());
             info_op.add(info_update);
         }
 
@@ -1084,8 +1086,9 @@ public class BackTrackGraph {
 
     /**
      * This method will perform the logic for the POST operations
-     * @param o         simple POST operation
-     * @param nominal   indicates whether the sequences are nominal or faulty
+     *
+     * @param o       simple POST operation
+     * @param nominal indicates whether the sequences are nominal or faulty
      * @return a list of annotations
      */
     private List<Annotation> copeWithPost(Operation o, boolean nominal) {
@@ -1111,6 +1114,7 @@ public class BackTrackGraph {
 
     /**
      * Deals with the simple posts
+     *
      * @param o - operation
      * @return - annotations for the sequence
      */
@@ -1141,9 +1145,10 @@ public class BackTrackGraph {
 
     /**
      * Deals with the compound posts
-     * @param o         compound POST operation
-     * @param nominal   indicates whether the sequences are nominal or faulty
-     * @return  annotations for the sequence
+     *
+     * @param o       compound POST operation
+     * @param nominal indicates whether the sequences are nominal or faulty
+     * @return annotations for the sequence
      */
     private List<Annotation> copeWithCompoundPost(Operation o, boolean nominal) {
         // DOESN'T DEPENDE ON ANYTHING!
@@ -1173,17 +1178,17 @@ public class BackTrackGraph {
                 List<Annotation> toReturn;
                 if (nominal) {
 
-                    List<Annotation> backtracked = backTrackPost(o, needed,null);
+                    List<Annotation> backtracked = backTrackPost(o, needed, null);
                     for (Annotation info_update : backtracked) {
-                        List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
+                        List<Annotation> info_op = history.get(info_update.getOperationId());
                         info_op.add(info_update);
                     }
                     toReturn = backtracked;
                 } else {
                     if (backtracks < threshold) {
-                        List<Annotation> backtracked = backTrackPost(o, needed,null);
+                        List<Annotation> backtracked = backTrackPost(o, needed, null);
                         for (Annotation info_update : backtracked) {
-                            List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
+                            List<Annotation> info_op = history.get(info_update.getOperationId());
                             info_op.add(info_update);
                         }
                         toReturn = backtracked;
@@ -1222,18 +1227,18 @@ public class BackTrackGraph {
                 List<Operation> needed = needed(o);
                 List<Annotation> toReturn;
                 if (nominal) {
-                    List<Annotation> backtracked = backTrackPost(o, needed,null);
+                    List<Annotation> backtracked = backTrackPost(o, needed, null);
                     for (Annotation info_update : backtracked) {
-                        List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
+                        List<Annotation> info_op = history.get(info_update.getOperationId());
                         info_op.add(info_update);
                     }
                     toReturn = backtracked;
 
                 } else {
                     if (backtracks < threshold) {
-                        List<Annotation> backtracked = backTrackPost(o, needed,null);
+                        List<Annotation> backtracked = backTrackPost(o, needed, null);
                         for (Annotation info_update : backtracked) {
-                            List<Annotation> info_op = history.get(info_update.getOperation().getOperationID());
+                            List<Annotation> info_op = history.get(info_update.getOperationId());
                             info_op.add(info_update);
                         }
                         toReturn = backtracked;
@@ -1253,6 +1258,7 @@ public class BackTrackGraph {
 
     /**
      * Gets the arguments that can be used for a POST operation
+     *
      * @param o - operation
      * @return - the valid arguments
      */
@@ -1269,8 +1275,9 @@ public class BackTrackGraph {
 
     /**
      * Gets a valid possibility for the arguments needed for a certain operation
+     *
      * @param needed - operations needed
-     * @param o - operation in question
+     * @param o      - operation in question
      * @return - the operations of the possibility
      */
     private List<Annotation> getPossibility(List<Operation> needed, Operation o) {
@@ -1324,7 +1331,8 @@ public class BackTrackGraph {
 
     /**
      * Applies the logic of the backtracking algorithm with the POST operation
-     * @param root - initial node for the backtrack
+     *
+     * @param root   - initial node for the backtrack
      * @param needed - operations that it neeeds
      * @return - annotations backtracked
      */
@@ -1351,14 +1359,14 @@ public class BackTrackGraph {
             toReturn = List.of(new_info);
         }
 
-        // else if(caller.getOperation().getVerb().equals("GET")) {
+        // else if(caller.getOperationVerb().equals("GET")) {
         //     Annotation new_info = new Annotation(root, Status.AVAILABLE, caller.getTag(), false);
         //     toReturn = List.of(new_info);
         // }
-        
-        else if ((caller != null && caller.getOperation().getVerb().equals("GET")) 
-        || (caller != null && caller.getOperation().getVerb().equals("DELETE")) 
-        || (caller != null && caller.getOperation().getVerb().equals("PUT"))) {
+
+        else if ((caller != null && caller.getOperationVerb().equals("GET"))
+                || (caller != null && caller.getOperationVerb().equals("DELETE"))
+                || (caller != null && caller.getOperationVerb().equals("PUT"))) {
             Stack<Annotation> stack = new Stack<>();
             List<Annotation> list_root = history.get(root.getOperationID());
             Annotation i_root = new Annotation(root, Status.AVAILABLE, caller.getTag(), false);
@@ -1379,9 +1387,7 @@ public class BackTrackGraph {
 
             while (!stack.isEmpty())
                 toReturn.add(stack.pop());
-        }
-
-        else {
+        } else {
             Stack<Annotation> stack = new Stack<>();
             List<Annotation> list_root = history.get(root.getOperationID());
             Annotation i_root = new Annotation(root, Status.AVAILABLE, list_root.size() + 1);
@@ -1409,6 +1415,7 @@ public class BackTrackGraph {
 
     /**
      * Gets a random operation for our graph
+     *
      * @return - the random operation
      */
     private Operation getRandomOperation() {
@@ -1429,8 +1436,10 @@ public class BackTrackGraph {
     }
 
     // Is this even generic enough?
+
     /**
      * Parses the requires string
+     *
      * @param requires - requires string
      * @return - parsed requires
      */
@@ -1460,7 +1469,7 @@ public class BackTrackGraph {
 
 
     public List<List<Annotation>> generateRandomSequences() {
-            
+
         List<List<Annotation>> toReturn = new LinkedList<>();
 
         for (int i = 1; i <= this.sequences; i++) {
@@ -1469,39 +1478,39 @@ public class BackTrackGraph {
         }
 
         return toReturn;
-}
-
-// Generates only one random sequence
-public List<Annotation> generateRandomSequence() {
-
-    List<Annotation> toReturn = new LinkedList<>();
-
-    for (int i = 1; i <= this.rands; i++) {
-        Operation o = getRandomOperation();
-        toReturn.add(generateAnnotation(o));
     }
 
-    return toReturn;
+    // Generates only one random sequence
+    public List<Annotation> generateRandomSequence() {
 
-}
+        List<Annotation> toReturn = new LinkedList<>();
 
-// Generate a pseudo-random annotation for a given operation
-private Annotation generateAnnotation(Operation o) {
-    
-    int tag = new Random().nextInt(this.rands) + 1;
-    
-    // Generate a random number between 0 and 1
-    double rnd = new Random().nextDouble();
+        for (int i = 1; i <= this.rands; i++) {
+            Operation o = getRandomOperation();
+            toReturn.add(generateAnnotation(o));
+        }
 
-    Status status = Status.UNAVAILABLE;
-    
-    if(rnd < 0.5) {
-        status = Status.AVAILABLE;
+        return toReturn;
+
     }
-    
-    Annotation a = new Annotation(o, status, tag);
 
-    return a;
-}
+    // Generate a pseudo-random annotation for a given operation
+    private Annotation generateAnnotation(Operation o) {
+
+        int tag = new Random().nextInt(this.rands) + 1;
+
+        // Generate a random number between 0 and 1
+        double rnd = new Random().nextDouble();
+
+        Status status = Status.UNAVAILABLE;
+
+        if (rnd < 0.5) {
+            status = Status.AVAILABLE;
+        }
+
+        Annotation a = new Annotation(o, status, tag);
+
+        return a;
+    }
 
 }
